@@ -23,6 +23,7 @@ import com.facebook.presto.spi.plan.AggregationNode;
 import com.facebook.presto.spi.plan.AggregationNode.Step;
 import com.facebook.presto.spi.plan.CteConsumerNode;
 import com.facebook.presto.spi.plan.CteProducerNode;
+import com.facebook.presto.spi.plan.DataOrganizationSpecification;
 import com.facebook.presto.spi.plan.EquiJoinClause;
 import com.facebook.presto.spi.plan.ExceptNode;
 import com.facebook.presto.spi.plan.FilterNode;
@@ -667,6 +668,13 @@ public final class PlanMatchPattern
         return node(RemoteSourceNode.class).with(new RemoteSourceMatcher(sourceFragmentIds, outputSymbolAliases));
     }
 
+    public static PlanMatchPattern tableFunction(Consumer<TableFunctionMatcher.Builder> handler, PlanMatchPattern... sources)
+    {
+        TableFunctionMatcher.Builder builder = new TableFunctionMatcher.Builder(sources);
+        handler.accept(builder);
+        return builder.build();
+    }
+
     public PlanMatchPattern(List<PlanMatchPattern> sourcePatterns)
     {
         requireNonNull(sourcePatterns, "sourcePatterns are null");
@@ -927,7 +935,7 @@ public final class PlanMatchPattern
                 .collect(toImmutableList());
     }
 
-    public static ExpectedValueProvider<WindowNode.Specification> specification(
+    public static ExpectedValueProvider<DataOrganizationSpecification> specification(
             List<String> partitionBy,
             List<String> orderBy,
             Map<String, SortOrder> orderings)
