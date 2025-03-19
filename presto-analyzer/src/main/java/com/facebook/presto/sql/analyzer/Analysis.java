@@ -199,6 +199,8 @@ public class Analysis
     // names of tables and aliased relations. All names are resolved case-insensitive.
     private final Map<NodeRef<Relation>, QualifiedName> relationNames = new LinkedHashMap<>();
     private final Map<NodeRef<TableFunctionInvocation>, TableFunctionInvocationAnalysis> tableFunctionAnalyses = new LinkedHashMap<>();
+    private final Set<NodeRef<Relation>> aliasedRelations = new LinkedHashSet<>();
+    private final Set<NodeRef<TableFunctionInvocation>> polymorphicTableFunctions = new LinkedHashSet<>();
 
     public Analysis(@Nullable Statement root, Map<NodeRef<Parameter>, Expression> parameters, boolean isDescribe)
     {
@@ -1024,6 +1026,27 @@ public class Analysis
         return relationNames.get(NodeRef.of(relation));
     }
 
+    public void addAliased(Relation relation)
+    {
+        aliasedRelations.add(NodeRef.of(relation));
+    }
+
+    public boolean isAliased(Relation relation)
+    {
+        return aliasedRelations.contains(NodeRef.of(relation));
+    }
+
+    public void addPolymorphicTableFunction(TableFunctionInvocation invocation)
+    {
+        polymorphicTableFunctions.add(NodeRef.of(invocation));
+    }
+
+    public boolean isPolymorphicTableFunction(TableFunctionInvocation invocation)
+    {
+        return polymorphicTableFunctions.contains(NodeRef.of(invocation));
+    }
+
+
     @Immutable
     public static final class Insert
     {
@@ -1359,6 +1382,7 @@ public class Analysis
         private final Map<String, Argument> arguments;
         private final List<TableArgumentAnalysis> tableArgumentAnalyses;
         private final List<List<String>> copartitioningLists;
+        private final int properColumnsCount;
         private final ConnectorTableFunctionHandle connectorTableFunctionHandle;
         private final ConnectorTransactionHandle transactionHandle;
 
@@ -1368,6 +1392,7 @@ public class Analysis
                 Map<String, Argument> arguments,
                 List<TableArgumentAnalysis> tableArgumentAnalyses,
                 List<List<String>> copartitioningLists,
+                int properColumnsCount,
                 ConnectorTableFunctionHandle connectorTableFunctionHandle,
                 ConnectorTransactionHandle transactionHandle)
         {
@@ -1378,6 +1403,7 @@ public class Analysis
             this.transactionHandle = requireNonNull(transactionHandle, "transactionHandle is null");
             this.tableArgumentAnalyses = ImmutableList.copyOf(tableArgumentAnalyses);
             this.copartitioningLists = ImmutableList.copyOf(copartitioningLists);
+            this.properColumnsCount = properColumnsCount;
         }
 
         public ConnectorId getConnectorId()
@@ -1403,6 +1429,16 @@ public class Analysis
         public List<List<String>> getCopartitioningLists()
         {
             return copartitioningLists;
+        }
+
+        /**
+         * Proper columns are the columns produced by the table function, as opposed to pass-through columns from input tables.
+         * Proper columns should be considered the actual result of the table function.
+         * @return the number of table function's proper columns
+         */
+        public int getProperColumnsCount()
+        {
+            return properColumnsCount;
         }
 
         public ConnectorTableFunctionHandle getConnectorTableFunctionHandle()
