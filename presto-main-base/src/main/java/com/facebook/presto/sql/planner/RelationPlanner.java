@@ -347,13 +347,6 @@ class RelationPlanner
                 // if there are partitioning columns, they might have to be coerced for copartitioning
                 if (tableArgument.getPartitionBy().isPresent() && !tableArgument.getPartitionBy().get().isEmpty()) {
                     List<Expression> partitioningColumns = tableArgument.getPartitionBy().get();
-                    //sourcePlanBuilder = sourcePlanBuilder.appendProjections(partitioningColumns, variableAllocator, idAllocator, session, metadata, sqlParser, analysis, context);
-                    //QueryPlanner partitionQueryPlanner = new QueryPlanner(analysis, variableAllocator, idAllocator, lambdaDeclarationToVariableMap, metadata, session, context, sqlParser);
-                    //QueryPlanner.PlanAndMappings copartitionCoercions = partitionQueryPlanner.coerce(sourcePlanBuilder, partitioningColumns, analysis, idAllocator, variableAllocator, metadata);
-                    //sourcePlanBuilder = copartitionCoercions.getSubPlan();
-                    //partitionBy = partitioningColumns.stream()
-                    //       .map(copartitionCoercions::get)
-                    //        .collect(toImmutableList());
                     for (Expression partitionColumn : partitioningColumns) {
                         if (!sourcePlanBuilder.canTranslate(partitionColumn)) {
                             ResolvedField partition = sourcePlan.getScope().tryResolveField(partitionColumn).orElseThrow(() -> new PrestoException(INVALID_PLAN_ERROR, "Missing equivalent alias"));
@@ -371,10 +364,9 @@ class RelationPlanner
                 // order by
                 Optional<OrderingScheme> orderBy = Optional.empty();
                 if (tableArgument.getOrderBy().isPresent()) {
-                    List<Expression> orderByColumns = filterUntranslatedExpressions(
-                            tableArgument.getOrderBy().get().getSortItems(), sourcePlanBuilder);
-                    //sourcePlanBuilder = sourcePlanBuilder.appendProjections(orderByColumns, variableAllocator, idAllocator, session, metadata, sqlParser, analysis, context);
-
+                    List<Expression> orderByColumns = tableArgument.getOrderBy().get().getSortItems().stream()
+                            .map(SortItem::getSortKey)
+                            .collect(Collectors.toList());
                     for (Expression col : orderByColumns) {
                         if (!sourcePlanBuilder.canTranslate(col)) {
                             ResolvedField partition = sourcePlan.getScope().tryResolveField(col).get();
@@ -1306,13 +1298,5 @@ class RelationPlanner
         {
             return variableMapping;
         }
-    }
-
-    private List<Expression> filterUntranslatedExpressions(List<SortItem> sortItems, PlanBuilder planBuilder)
-    {
-        return sortItems.stream()
-                .map(SortItem::getSortKey)
-//                .filter(expression -> !planBuilder.canTranslate(expression))
-                .collect(Collectors.toList());
     }
 }

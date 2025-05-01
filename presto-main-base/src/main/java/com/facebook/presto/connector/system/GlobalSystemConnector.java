@@ -143,6 +143,29 @@ public class GlobalSystemConnector
     }
 
     @Override
+    public ConnectorSplitManager getSplitManager()
+    {
+        return new ConnectorSplitManager()
+        {
+            @Override
+            public ConnectorSplitSource getSplits(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorTableLayoutHandle layout, SplitSchedulingContext splitSchedulingContext)
+            {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public ConnectorSplitSource getSplits(ConnectorTransactionHandle transaction, ConnectorSession session, ConnectorTableFunctionHandle function)
+            {
+                if (function instanceof SequenceFunctionHandle) {
+                    SequenceFunctionHandle sequenceFunctionHandle = (SequenceFunctionHandle) function;
+                    return getSequenceFunctionSplitSource(sequenceFunctionHandle);
+                }
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    @Override
     public ConnectorPageSourceProvider getPageSourceProvider()
     {
         return new ConnectorPageSourceProvider() {
@@ -170,28 +193,5 @@ public class GlobalSystemConnector
     public Set<ConnectorTableFunction> getTableFunctions()
     {
         return tableFunctions;
-    }
-
-    @Override
-    public ConnectorSplitManager getSplitManager()
-    {
-        return new ConnectorSplitManager()
-        {
-            @Override
-            public ConnectorSplitSource getSplits(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorTableLayoutHandle layout, SplitSchedulingContext splitSchedulingContext)
-            {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public ConnectorSplitSource getSplits(ConnectorTransactionHandle transaction, ConnectorSession session, ConnectorTableFunctionHandle function)
-            {
-                if (function instanceof SequenceFunctionHandle) {
-                    SequenceFunctionHandle sequenceFunctionHandle = (SequenceFunctionHandle) function;
-                    return getSequenceFunctionSplitSource(sequenceFunctionHandle);
-                }
-                throw new UnsupportedOperationException();
-            }
-        };
     }
 }

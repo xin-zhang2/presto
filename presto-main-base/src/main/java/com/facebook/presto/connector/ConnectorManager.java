@@ -108,6 +108,7 @@ public class ConnectorManager
     private final ConnectorPlanOptimizerManager connectorPlanOptimizerManager;
     private final ConnectorMetadataUpdaterManager connectorMetadataUpdaterManager;
     private final ConnectorTypeSerdeManager connectorTypeSerdeManager;
+
     private final PageSinkManager pageSinkManager;
     private final HandleResolver handleResolver;
     private final InternalNodeManager nodeManager;
