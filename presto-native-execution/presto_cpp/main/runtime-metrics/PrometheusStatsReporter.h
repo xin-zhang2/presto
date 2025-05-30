@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+#include <folly/executors/CPUThreadPoolExecutor.h>
+
 #include "presto_cpp/main/common/Configs.h"
 #include "velox/common/base/Exceptions.h"
 #include "velox/common/base/GTestMacros.h"
@@ -89,6 +91,7 @@ class PrometheusStatsReporter : public facebook::velox::BaseStatsReporter {
 
  private:
   std::shared_ptr<PrometheusImpl> impl_;
+  std::shared_ptr<folly::CPUThreadPoolExecutor> executor_;
   // A map of labels assigned to each metric which helps in filtering at client
   // end.
   mutable std::unordered_map<std::string, StatsInfo> registeredMetricsMap_;

@@ -49,6 +49,7 @@ struct PrometheusStatsReporter::PrometheusImpl {
 PrometheusStatsReporter::PrometheusStatsReporter(
     const std::map<std::string, std::string>& labels) {
   impl_ = std::make_shared<PrometheusImpl>(labels);
+  executor_ = std::make_shared<folly::CPUThreadPoolExecutor>(2);
 }
 
 void PrometheusStatsReporter::registerMetricExportType(
@@ -208,22 +209,24 @@ void PrometheusStatsReporter::addHistogramMetricValue(
 void PrometheusStatsReporter::addHistogramMetricValue(
     const char* key,
     size_t value) const {
-  auto metricIterator = registeredMetricsMap_.find(key);
-  if (metricIterator == registeredMetricsMap_.end()) {
-    VLOG(1) << "addMetricValue for unregistered metric " << key;
-    return;
-  }
-  auto histogram = reinterpret_cast<::prometheus::Histogram*>(
-      metricIterator->second.metricPtr);
-  histogram->Observe(value);
-
-  std::string summaryKey = std::string(key).append(kSummarySuffix);
-  metricIterator = registeredMetricsMap_.find(summaryKey);
-  if (metricIterator != registeredMetricsMap_.end()) {
-    auto summary = reinterpret_cast<::prometheus::Summary*>(
+  executor_->add([this, key, value]() {
+    auto metricIterator = registeredMetricsMap_.find(key);
+    if (metricIterator == registeredMetricsMap_.end()) {
+      VLOG(1) << "addMetricValue for unregistered metric " << key;
+      return;
+    }
+    auto histogram = reinterpret_cast<::prometheus::Histogram*>(
         metricIterator->second.metricPtr);
-    summary->Observe(value);
-  }
+    histogram->Observe(value);
+
+    std::string summaryKey = std::string(key).append(kSummarySuffix);
+    metricIterator = registeredMetricsMap_.find(summaryKey);
+    if (metricIterator != registeredMetricsMap_.end()) {
+      auto summary = reinterpret_cast<::prometheus::Summary*>(
+          metricIterator->second.metricPtr);
+      summary->Observe(value);
+    }
+  });
 }
 
 void PrometheusStatsReporter::addHistogramMetricValue(
