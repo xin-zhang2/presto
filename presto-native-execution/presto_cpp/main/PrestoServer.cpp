@@ -78,6 +78,7 @@
 
 // #ifdef PRESTO_ENABLE_TABLE_FUNCTIONS
 #include "presto_cpp/main/tvf/exec/TableFunctionOperator.h"
+#include "presto_cpp/main/tvf/exec/TableFunctionTranslator.h"
 #include "presto_cpp/main/tvf/functions/TableFunctionsRegistration.h"
 // #endif
 
