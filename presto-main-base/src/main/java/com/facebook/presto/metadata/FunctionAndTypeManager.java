@@ -33,6 +33,7 @@ import com.facebook.presto.common.type.TypeSignatureParameter;
 import com.facebook.presto.common.type.TypeWithName;
 import com.facebook.presto.common.type.UserDefinedType;
 import com.facebook.presto.operator.window.WindowFunctionSupplier;
+import com.facebook.presto.spi.ConnectorId;
 import com.facebook.presto.spi.NodeManager;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.StandardErrorCode;
@@ -54,6 +55,8 @@ import com.facebook.presto.spi.function.SqlFunctionHandle;
 import com.facebook.presto.spi.function.SqlFunctionId;
 import com.facebook.presto.spi.function.SqlFunctionSupplier;
 import com.facebook.presto.spi.function.SqlInvokedFunction;
+import com.facebook.presto.spi.function.table.ConnectorTableFunctionHandle;
+import com.facebook.presto.spi.function.table.TableFunctionProcessorProvider;
 import com.facebook.presto.spi.type.TypeManagerContext;
 import com.facebook.presto.spi.type.TypeManagerFactory;
 import com.facebook.presto.sql.analyzer.FeaturesConfig;
@@ -88,6 +91,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static com.facebook.presto.SystemSessionProperties.isExperimentalFunctionsEnabled;
@@ -100,6 +104,7 @@ import static com.facebook.presto.metadata.FunctionSignatureMatcher.constructFun
 import static com.facebook.presto.metadata.SessionFunctionHandle.SESSION_NAMESPACE;
 import static com.facebook.presto.metadata.SignatureBinder.applyBoundVariables;
 import static com.facebook.presto.spi.StandardErrorCode.AMBIGUOUS_FUNCTION_CALL;
+import static com.facebook.presto.spi.StandardErrorCode.ALREADY_EXISTS;
 import static com.facebook.presto.spi.StandardErrorCode.FUNCTION_IMPLEMENTATION_MISSING;
 import static com.facebook.presto.spi.StandardErrorCode.FUNCTION_NOT_FOUND;
 import static com.facebook.presto.spi.StandardErrorCode.GENERIC_USER_ERROR;
@@ -133,6 +138,7 @@ public class FunctionAndTypeManager
 {
     private static final Pattern DEFAULT_NAMESPACE_PREFIX_PATTERN = Pattern.compile("[a-z]+\\.[a-z]+");
     private final TransactionManager transactionManager;
+    private final TableFunctionRegistry tableFunctionRegistry;
     private final BlockEncodingSerde blockEncodingSerde;
     private final BuiltInTypeAndFunctionNamespaceManager builtInTypeAndFunctionNamespaceManager;
     private final FunctionInvokerProvider functionInvokerProvider;
@@ -152,10 +158,12 @@ public class FunctionAndTypeManager
     private final BuiltInPluginFunctionNamespaceManager builtInPluginFunctionNamespaceManager;
     private final FunctionsConfig functionsConfig;
     private final Set<Type> types;
+    private final ConcurrentHashMap<ConnectorId, Function<ConnectorTableFunctionHandle, TableFunctionProcessorProvider>> tableFunctionProcessorProviderMap = new ConcurrentHashMap<>();
 
     @Inject
     public FunctionAndTypeManager(
             TransactionManager transactionManager,
+            TableFunctionRegistry tableFunctionRegistry,
             BlockEncodingSerde blockEncodingSerde,
             FeaturesConfig featuresConfig,
             FunctionsConfig functionsConfig,
@@ -163,6 +171,7 @@ public class FunctionAndTypeManager
             Set<Type> types)
     {
         this.transactionManager = requireNonNull(transactionManager, "transactionManager is null");
+        this.tableFunctionRegistry = requireNonNull(tableFunctionRegistry, "tableFunctionRegistry is null");
         this.blockEncodingSerde = requireNonNull(blockEncodingSerde, "blockEncodingSerde is null");
         this.functionsConfig = requireNonNull(functionsConfig, "functionsConfig is null");
         this.types = requireNonNull(types, "types is null");
@@ -192,6 +201,7 @@ public class FunctionAndTypeManager
     {
         return new FunctionAndTypeManager(
                 createTestTransactionManager(),
+                new TableFunctionRegistry(),
                 new BlockEncodingManager(),
                 new FeaturesConfig(),
                 new FunctionsConfig(),
@@ -421,6 +431,11 @@ public class FunctionAndTypeManager
         handleResolver.addFunctionNamespace(name, factory.getHandleResolver());
     }
 
+    public TableFunctionRegistry getTableFunctionRegistry()
+    {
+        return tableFunctionRegistry;
+    }
+
     public void loadTypeManager(String typeManagerName)
     {
         requireNonNull(typeManagerName, "typeManagerName is null");
@@ -441,6 +456,11 @@ public class FunctionAndTypeManager
         if (typeManagerFactories.putIfAbsent(factory.getName(), factory) != null) {
             throw new IllegalArgumentException(format("Type manager '%s' is already registered", factory.getName()));
         }
+    }
+
+    public TransactionManager getTransactionManager()
+    {
+        return transactionManager;
     }
 
     public void registerBuiltInFunctions(List<? extends SqlFunction> functions)
@@ -636,6 +656,24 @@ public class FunctionAndTypeManager
         Optional<FunctionNamespaceManager<?>> functionNamespaceManager = getServingFunctionNamespaceManager(functionHandle.getCatalogSchemaName());
         checkArgument(functionNamespaceManager.isPresent(), "Cannot find function namespace for '%s'", functionHandle.getCatalogSchemaName());
         return functionNamespaceManager.get().getScalarFunctionImplementation(functionHandle);
+    }
+
+    public TableFunctionProcessorProvider getTableFunctionProcessorProvider(TableFunctionHandle tableFunctionHandle)
+    {
+        return tableFunctionProcessorProviderMap.get(tableFunctionHandle.getConnectorId()).apply(tableFunctionHandle.getFunctionHandle());
+    }
+
+    public void addTableFunctionProcessorProvider(ConnectorId connectorId, Function<ConnectorTableFunctionHandle, TableFunctionProcessorProvider> tableFunctionProcessorProvider)
+    {
+        if (tableFunctionProcessorProviderMap.putIfAbsent(connectorId, tableFunctionProcessorProvider) != null) {
+            throw new PrestoException(ALREADY_EXISTS,
+                    format("TableFuncitonProcessorProvider already exists for connectorId %s. Overwriting is not supported.", connectorId.getCatalogName()));
+        }
+    }
+
+    public void removeTableFunctionProcessorProvider(ConnectorId connectorId)
+    {
+        tableFunctionProcessorProviderMap.remove(connectorId);
     }
 
     public AggregationFunctionImplementation getAggregateFunctionImplementation(FunctionHandle functionHandle)

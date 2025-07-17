@@ -109,6 +109,7 @@ import com.facebook.presto.metadata.MetadataUtil;
 import com.facebook.presto.metadata.QualifiedTablePrefix;
 import com.facebook.presto.metadata.SchemaPropertyManager;
 import com.facebook.presto.metadata.Split;
+import com.facebook.presto.metadata.TableFunctionRegistry;
 import com.facebook.presto.metadata.TablePropertyManager;
 import com.facebook.presto.nodeManager.PluginNodeManager;
 import com.facebook.presto.operator.Driver;
@@ -123,6 +124,7 @@ import com.facebook.presto.operator.SourceOperatorFactory;
 import com.facebook.presto.operator.TableCommitContext;
 import com.facebook.presto.operator.TaskContext;
 import com.facebook.presto.operator.index.IndexJoinLookupStats;
+import com.facebook.presto.operator.table.ExcludeColumns.ExcludeColumnsFunction;
 import com.facebook.presto.server.NodeStatusNotificationManager;
 import com.facebook.presto.server.PluginManager;
 import com.facebook.presto.server.PluginManagerConfig;
@@ -433,7 +435,7 @@ public class LocalQueryRunner
         featuresConfig.setIgnoreStatsCalculatorFailures(false);
 
         this.metadata = new MetadataManager(
-                new FunctionAndTypeManager(transactionManager, blockEncodingManager, featuresConfig, functionsConfig, new HandleResolver(), ImmutableSet.of()),
+                new FunctionAndTypeManager(transactionManager, new TableFunctionRegistry(), blockEncodingManager, featuresConfig, functionsConfig, new HandleResolver(), ImmutableSet.of()),
                 blockEncodingManager,
                 createTestingSessionPropertyManager(
                         new SystemSessionProperties(
@@ -519,7 +521,8 @@ public class LocalQueryRunner
                 new ColumnPropertiesSystemTable(transactionManager, metadata),
                 new AnalyzePropertiesSystemTable(transactionManager, metadata),
                 new TransactionsSystemTable(metadata.getFunctionAndTypeManager(), transactionManager)),
-                ImmutableSet.of());
+                ImmutableSet.of(),
+                ImmutableSet.of(new ExcludeColumnsFunction()));
 
         BuiltInQueryAnalyzer queryAnalyzer = new BuiltInQueryAnalyzer(metadata, sqlParser, accessControl, Optional.empty(), metadataExtractorExecutor);
         BuiltInAnalyzerProvider analyzerProvider = new BuiltInAnalyzerProvider(queryAnalyzer);
@@ -771,7 +774,8 @@ public class LocalQueryRunner
     @Override
     public void createCatalog(String catalogName, String connectorName, Map<String, String> properties)
     {
-        throw new UnsupportedOperationException();
+        nodeManager.addCurrentNodeConnector(new ConnectorId(catalogName));
+        connectorManager.createConnection(catalogName, connectorName, properties);
     }
 
     @Override
