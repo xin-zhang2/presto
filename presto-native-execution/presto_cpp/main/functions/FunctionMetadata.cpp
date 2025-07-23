@@ -12,7 +12,6 @@
  * limitations under the License.
  */
 #include "presto_cpp/main/functions/FunctionMetadata.h"
-#include "presto_cpp/main/types/FunctionMetadata.h"
 #include "presto_cpp/main/tvf/spi/TableFunction.h"
 #include "presto_cpp/main/types/PrestoToVeloxExpr.h"
 #include "presto_cpp/main/types/TypeParser.h"

@@ -12773,39 +12773,3 @@ void from_json(const json& j, WindowNode& p) {
       "preSortedOrderPrefix");
 }
 } // namespace facebook::presto::protocol
-namespace facebook::presto::protocol {
-// Loosly copied this here from NLOHMANN_JSON_SERIALIZE_ENUM()
-
-// NOLINTNEXTLINE: cppcoreguidelines-avoid-c-arrays
-static const std::pair<NodeState, json> NodeState_enum_table[] =
-    { // NOLINT: cert-err58-cpp
-        {NodeState::ACTIVE, "ACTIVE"},
-        {NodeState::INACTIVE, "INACTIVE"},
-        {NodeState::SHUTTING_DOWN, "SHUTTING_DOWN"}};
-void to_json(json& j, const NodeState& e) {
-  static_assert(std::is_enum<NodeState>::value, "NodeState must be an enum!");
-  const auto* it = std::find_if(
-      std::begin(NodeState_enum_table),
-      std::end(NodeState_enum_table),
-      [e](const std::pair<NodeState, json>& ej_pair) -> bool {
-        return ej_pair.first == e;
-      });
-  j = ((it != std::end(NodeState_enum_table))
-           ? it
-           : std::begin(NodeState_enum_table))
-          ->second;
-}
-void from_json(const json& j, NodeState& e) {
-  static_assert(std::is_enum<NodeState>::value, "NodeState must be an enum!");
-  const auto* it = std::find_if(
-      std::begin(NodeState_enum_table),
-      std::end(NodeState_enum_table),
-      [&j](const std::pair<NodeState, json>& ej_pair) -> bool {
-        return ej_pair.second == j;
-      });
-  e = ((it != std::end(NodeState_enum_table))
-           ? it
-           : std::begin(NodeState_enum_table))
-          ->first;
-}
-} // namespace facebook::presto::protocol

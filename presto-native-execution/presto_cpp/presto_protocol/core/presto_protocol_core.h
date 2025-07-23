@@ -2788,8 +2788,3 @@ struct WindowNode : public PlanNode {
 void to_json(json& j, const WindowNode& p);
 void from_json(const json& j, WindowNode& p);
 } // namespace facebook::presto::protocol
-namespace facebook::presto::protocol {
-enum class NodeState { ACTIVE, INACTIVE, SHUTTING_DOWN };
-extern void to_json(json& j, const NodeState& e);
-extern void from_json(const json& j, NodeState& e);
-} // namespace facebook::presto::protocol

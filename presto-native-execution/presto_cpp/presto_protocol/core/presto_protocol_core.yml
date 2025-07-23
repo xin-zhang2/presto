@@ -42,9 +42,6 @@ ExtraFields:
   RemoteTransactionHandle:
     Optional<String>: dummy
 
-AddToOutput:
-  - NodeState
-
 AbstractClasses:
   ColumnHandle:
     super: JsonEncodedSubclass
