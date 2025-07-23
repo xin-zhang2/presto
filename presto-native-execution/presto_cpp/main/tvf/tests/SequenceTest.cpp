@@ -101,8 +101,7 @@ TEST_F(SequenceTest, basic) {
   auto expected = makeRowVector(
       {makeFlatVector<int64_t>({10, 12, 14, 16, 18, 20, 22, 24, 26, 28})});
 
-  auto sequenceTvfNode =
-      dynamic_pointer_cast<const TableFunctionProcessorNode>(plan);
+  auto sequenceTvfNode = std::dynamic_pointer_cast<const TableFunctionProcessorNode>(plan);
   auto sequenceSplits =
       TableFunction::getSplits("sequence", sequenceTvfNode->handle());
   std::vector<velox::exec::Split> tvfSplits;

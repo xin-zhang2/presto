@@ -35,8 +35,8 @@ import com.facebook.presto.spi.function.TableFunctionHandleResolver;
 import com.facebook.presto.spi.function.TableFunctionSplitResolver;
 import com.facebook.presto.spi.function.table.ConnectorTableFunctionHandle;
 import com.facebook.presto.split.EmptySplitHandleResolver;
-import jakarta.inject.Inject;
 import com.google.common.collect.ImmutableSet;
+import jakarta.inject.Inject;
 
 import java.util.Map;
 import java.util.Map.Entry;

@@ -14,8 +14,7 @@
 package com.facebook.presto.spi.function.table;
 
 import com.facebook.presto.common.Page;
-
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import java.util.concurrent.CompletableFuture;
 

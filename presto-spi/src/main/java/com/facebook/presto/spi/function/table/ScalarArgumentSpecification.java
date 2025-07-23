@@ -17,8 +17,7 @@ import com.facebook.presto.common.predicate.Primitives;
 import com.facebook.presto.common.type.Type;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import static com.facebook.presto.spi.function.table.Preconditions.checkArgument;
 import static java.lang.String.format;

@@ -28,8 +28,7 @@ import com.facebook.presto.sql.analyzer.SemanticException;
 import com.facebook.presto.sql.tree.QualifiedName;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
-import javax.annotation.concurrent.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 import java.util.Collection;
 import java.util.HashSet;

@@ -14,8 +14,7 @@
 package com.facebook.presto.operator;
 
 import com.facebook.presto.common.Page;
-
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import static com.facebook.presto.operator.WorkProcessor.ProcessState.finished;
 import static com.facebook.presto.operator.WorkProcessor.ProcessState.ofResult;

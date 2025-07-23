@@ -16,8 +16,7 @@ package com.facebook.presto.spi.function.table;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import static com.facebook.presto.spi.function.table.Preconditions.checkArgument;
 import static com.facebook.presto.spi.function.table.Preconditions.checkNotNullOrEmpty;
