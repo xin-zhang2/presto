@@ -114,9 +114,9 @@ TablePartitionBuild::TablePartitionBuild(
       inputType_(inputType),
       compareFlags_{makeCompareFlags(partitionKeys.size(), sortingOrders)},
       prefixSortConfig_(prefixSortConfig),
+      decodedInputVectors_(inputType->size()),
       sortedRows_(0, memory::StlAllocator<char*>(*pool)),
-      partitionStartRows_(0, memory::StlAllocator<char*>(*pool)),
-      decodedInputVectors_(inputType->size()) {
+      partitionStartRows_(0, memory::StlAllocator<char*>(*pool)) {
   VELOX_CHECK_NOT_NULL(pool_);
   std::tie(inputChannels_, inversedInputChannels_, inputType_) =
       reorderInputChannels(

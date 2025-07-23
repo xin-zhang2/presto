@@ -101,7 +101,7 @@ std::unique_ptr<TableFunctionAnalysis> TableFunction::analyze(
   VELOX_USER_FAIL("Table function not registered: {}", name);
 }
 
-std::vector<const TableSplitHandlePtr> TableFunction::getSplits(
+std::vector<TableSplitHandlePtr> TableFunction::getSplits(
     const std::string& name,
     const TableFunctionHandlePtr& handle) {
   // Lookup the function in the new registry first.
