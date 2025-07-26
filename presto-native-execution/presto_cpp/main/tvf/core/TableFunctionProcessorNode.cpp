@@ -23,23 +23,130 @@ TableFunctionProcessorNode::TableFunctionProcessorNode(
     PlanNodeId id,
     const std::string& name,
     TableFunctionHandlePtr handle,
+    std::vector<velox::core::FieldAccessTypedExprPtr> partitionKeys,
+    std::vector<velox::core::FieldAccessTypedExprPtr> sortingKeys,
+    std::vector<velox::core::SortOrder> sortingOrders,
     velox::RowTypePtr outputType,
     RequiredColumnsMap requiredColumns,
     std::vector<PlanNodePtr> sources)
     : PlanNode(std::move(id)),
       functionName_(name),
       handle_(std::move(handle)),
+      partitionKeys_(std::move(partitionKeys)),
+      sortingKeys_(std::move(sortingKeys)),
+      sortingOrders_(std::move(sortingOrders)),
       outputType_(outputType),
       requiredColumns_(std::move(requiredColumns)),
-      sources_{std::move(sources)} {}
+      sources_{std::move(sources)} {
+  VELOX_CHECK_EQ(
+      sortingKeys_.size(),
+      sortingOrders_.size(),
+      "Number of sorting keys must be equal to the number of sorting orders");
 
-void TableFunctionProcessorNode::addDetails(std::stringstream& stream) const {}
+  std::unordered_set<std::string> keyNames;
+  for (const auto& key : partitionKeys_) {
+    VELOX_USER_CHECK(
+        keyNames.insert(key->name()).second,
+        "Partitioning keys must be unique. Found duplicate key: {}",
+        key->name());
+  }
+
+  for (const auto& key : sortingKeys_) {
+    VELOX_USER_CHECK(
+        keyNames.insert(key->name()).second,
+        "Sorting keys must be unique and not overlap with partitioning keys. Found duplicate key: {}",
+        key->name());
+  }
+}
+
+namespace {
+void appendComma(int32_t i, std::stringstream& sql) {
+  if (i > 0) {
+    sql << ", ";
+  }
+}
+
+void addFields(
+    std::stringstream& stream,
+    const std::vector<FieldAccessTypedExprPtr>& keys) {
+  for (auto i = 0; i < keys.size(); ++i) {
+    appendComma(i, stream);
+    stream << keys[i]->name();
+  }
+}
+
+void addKeys(std::stringstream& stream, const std::vector<TypedExprPtr>& keys) {
+  for (auto i = 0; i < keys.size(); ++i) {
+    const auto& expr = keys[i];
+    appendComma(i, stream);
+    if (auto field = TypedExprs::asFieldAccess(expr)) {
+      stream << field->name();
+    } else if (auto constant = TypedExprs::asConstant(expr)) {
+      stream << constant->toString();
+    } else {
+      stream << expr->toString();
+    }
+  }
+}
+
+void addSortingKeys(
+    const std::vector<FieldAccessTypedExprPtr>& sortingKeys,
+    const std::vector<SortOrder>& sortingOrders,
+    std::stringstream& stream) {
+  for (auto i = 0; i < sortingKeys.size(); ++i) {
+    appendComma(i, stream);
+    stream << sortingKeys[i]->name() << " " << sortingOrders[i].toString();
+  }
+}
+
+}
+
+void TableFunctionProcessorNode::addDetails(std::stringstream& stream) const {
+  if (!partitionKeys_.empty()) {
+    stream << "partition by [";
+    addFields(stream, partitionKeys_);
+    stream << "] ";
+  }
+
+  if (!sortingKeys_.empty()) {
+    stream << "order by [";
+    addSortingKeys(sortingKeys_, sortingOrders_, stream);
+    stream << "] ";
+  }
+}
+
+namespace {
+folly::dynamic serializeSortingOrders(
+    const std::vector<SortOrder>& sortingOrders) {
+  auto array = folly::dynamic::array();
+  for (const auto& order : sortingOrders) {
+    array.push_back(order.serialize());
+  }
+
+  return array;
+}
+
+std::vector<SortOrder> deserializeSortingOrders(const folly::dynamic& array) {
+  std::vector<SortOrder> sortingOrders;
+  sortingOrders.reserve(array.size());
+  for (const auto& order : array) {
+    sortingOrders.push_back(SortOrder::deserialize(order));
+  }
+  return sortingOrders;
+}
+
+}
 
 folly::dynamic TableFunctionProcessorNode::serialize() const {
   auto obj = PlanNode::serialize();
   if (handle_) {
     obj["handle"] = handle_->serialize();
   }
+
+  obj["partitionKeys"] = ISerializable::serialize(partitionKeys_);
+  obj["sortingKeys"] = ISerializable::serialize(sortingKeys_);
+  obj["sortingOrders"] = serializeSortingOrders(sortingOrders_);
+
   obj["functionName"] = functionName_.data();
   obj["outputType"] = outputType_->serialize();
 
@@ -81,6 +188,14 @@ PlanNodeId deserializePlanNodeId(const folly::dynamic& obj) {
 RowTypePtr deserializeRowType(const folly::dynamic& obj) {
   return ISerializable::deserialize<RowType>(obj);
 }
+
+std::vector<FieldAccessTypedExprPtr> deserializeFields(
+    const folly::dynamic& array,
+    void* context) {
+  return ISerializable::deserialize<std::vector<FieldAccessTypedExpr>>(
+      array, context);
+}
+
 } // namespace
 
 // static
@@ -91,6 +206,11 @@ PlanNodePtr TableFunctionProcessorNode::create(
   auto outputType = deserializeRowType(obj["outputType"]);
   auto handle = ISerializable::deserialize<TableFunctionHandle>(obj["handle"]);
   VELOX_CHECK(handle);
+
+  auto partitionKeys = deserializeFields(obj["partitionKeys"], context);
+  auto sortingKeys = deserializeFields(obj["sortingKeys"], context);
+
+  auto sortingOrders = deserializeSortingOrders(obj["sortingOrders"]);
 
   auto name = obj["functionName"].asString();
 
@@ -106,6 +226,9 @@ PlanNodePtr TableFunctionProcessorNode::create(
       deserializePlanNodeId(obj),
       name,
       handle,
+      partitionKeys,
+      sortingKeys,
+      sortingOrders,
       outputType,
       requiredColumns,
       sources);

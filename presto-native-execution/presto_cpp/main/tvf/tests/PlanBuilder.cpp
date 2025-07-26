@@ -61,10 +61,16 @@ addTvfNode(
       sources.push_back(source);
     }
 
+    std::vector<velox::core::FieldAccessTypedExprPtr> partitionKeys = {};
+    std::vector<velox::core::FieldAccessTypedExprPtr> sortingKeys = {};
+    std::vector<velox::core::SortOrder> sortingOrders = {};
     return std::make_shared<TableFunctionProcessorNode>(
         nodeId,
         name,
         analysis->tableFunctionHandle(),
+        partitionKeys,
+        sortingKeys,
+        sortingOrders,
         outputType,
         analysis->requiredColumns(),
         sources);

@@ -14,6 +14,8 @@
 #pragma once
 
 #include "presto_cpp/main/tvf/spi/TableFunction.h"
+
+#include "velox/core/Expressions.h"
 #include "velox/core/PlanNode.h"
 
 namespace facebook::presto::tvf {
@@ -24,6 +26,9 @@ class TableFunctionProcessorNode : public velox::core::PlanNode {
       velox::core::PlanNodeId id,
       const std::string& name,
       TableFunctionHandlePtr handle,
+      std::vector<velox::core::FieldAccessTypedExprPtr> partitionKeys,
+      std::vector<velox::core::FieldAccessTypedExprPtr> sortingKeys,
+      std::vector<velox::core::SortOrder> sortingOrders,
       velox::RowTypePtr outputType,
       RequiredColumnsMap requiredColumns,
       std::vector<velox::core::PlanNodePtr> sources);
@@ -56,6 +61,18 @@ class TableFunctionProcessorNode : public velox::core::PlanNode {
     return handle_;
   }
 
+  const std::vector<velox::core::FieldAccessTypedExprPtr>& partitionKeys() const {
+    return partitionKeys_;
+  }
+
+  const std::vector<velox::core::FieldAccessTypedExprPtr>& sortingKeys() const {
+    return sortingKeys_;
+  }
+
+  const std::vector<velox::core::SortOrder>& sortingOrders() const {
+    return sortingOrders_;
+  }
+
   const RequiredColumnsMap requiredColumns() const {
     return requiredColumns_;
   }
@@ -81,6 +98,10 @@ class TableFunctionProcessorNode : public velox::core::PlanNode {
   const std::string functionName_;
 
   TableFunctionHandlePtr handle_;
+
+  std::vector<velox::core::FieldAccessTypedExprPtr> partitionKeys_;
+  std::vector<velox::core::FieldAccessTypedExprPtr> sortingKeys_;
+  std::vector<velox::core::SortOrder> sortingOrders_;
 
   const velox::RowTypePtr outputType_;
 

@@ -72,7 +72,18 @@ TableFunctionOperator::TableFunctionOperator(
           std::make_unique<TableFunctionPartition>(data_.get())),
       needsInput_(true),
       result_(nullptr),
-      input_(nullptr) {}
+      input_(nullptr) {
+  tablePartitionBuild_ = std::make_unique<TablePartitionBuild>(
+      requiredColummType_,
+      tableFunctionNode->partitionKeys(),
+      tableFunctionNode->sortingKeys(),
+      tableFunctionNode->sortingOrders(),
+      pool(),
+      common::PrefixSortConfig{
+          driverCtx->queryConfig().prefixSortNormalizedKeyMaxBytes(),
+          driverCtx->queryConfig().prefixSortMinRows(),
+          driverCtx->queryConfig().prefixSortMaxStringPrefixLength()});
+}
 
 void TableFunctionOperator::initialize() {
   Operator::initialize();
@@ -98,32 +109,9 @@ void TableFunctionOperator::createTableFunction(
 // partition by an order by this would need a change but just testing with a
 // simple model for now.
 void TableFunctionOperator::addInput(RowVectorPtr input) {
-  VELOX_CHECK(rows_.empty());
   VELOX_CHECK(needsInput_);
 
-  rows_.reserve(input->size());
-
-  // Optimize the decoding. Ideally this should be done only for the required
-  // input columns.
-  std::vector<column_index_t> requiredColumns =
-      tableFunctionNode_->requiredColumns().at("t1");
-  for (auto i = 0; i < requiredColumns.size(); ++i) {
-    decodedInputVectors_[i].decode(*input->childAt(requiredColumns.at(i)));
-  }
-
-  // Add all the rows into the RowContainer.
-  for (auto row = 0; row < input->size(); ++row) {
-    char* newRow = data_->newRow();
-
-    for (auto col = 0; col < requiredColumns.size(); ++col) {
-      data_->store(decodedInputVectors_[col], row, newRow, col);
-    }
-
-    rows_.push_back(newRow);
-  }
-  tableFunctionPartition_->addRows(rows_);
-
-  needsInput_ = false;
+  tablePartitionBuild_->addInput(input);
 }
 
 void TableFunctionOperator::noMoreInput() {
@@ -147,9 +135,7 @@ void TableFunctionOperator::clear() {
   result_ = nullptr;
   input_ = nullptr;
 
-  data_->eraseRows(folly::Range<char**>(rows_.data(), rows_.size()));
   tableFunctionPartition_->clear();
-  rows_.clear();
   needsInput_ = true;
 
   if (noMoreInput_) {

@@ -32,8 +32,6 @@ class TableFunctionPartition {
   /// The TableFunctionPartition is constructed by TableFunctionOperator
   /// from the input data.
   /// 'data' : Underlying RowContainer of the TableFunctionOperator.
-  /// 'rows' : Pointers to rows in the RowContainer belonging to this partition.
-  /// 'sortKeyInfo' : Order by columns used by the the TableFunction operator.
   TableFunctionPartition(velox::exec::RowContainer* data);
 
   ~TableFunctionPartition();

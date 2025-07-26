@@ -16,6 +16,7 @@
 #pragma once
 
 #include "presto_cpp/main/tvf/core/TableFunctionProcessorNode.h"
+#include "presto_cpp/main/tvf/exec/TablePartitionBuild.h"
 #include "presto_cpp/main/tvf/exec/TableFunctionPartition.h"
 
 #include "velox/common/memory/HashStringAllocator.h"
@@ -83,16 +84,9 @@ class TableFunctionOperator : public velox::exec::Operator {
   // This would be a list when the operator supports multiple TableArguments.
   const velox::RowTypePtr requiredColummType_;
 
-  /// The RowContainer holds all the input rows in WindowBuild. Columns are
-  /// already reordered according to inputChannels_.
-  std::unique_ptr<velox::exec::RowContainer> data_;
-
-  /// The decodedInputVectors_ are reused across addInput() calls to decode the
-  /// partition and sort keys for the above RowContainer.
-  std::vector<velox::DecodedVector> decodedInputVectors_;
-
-  // Vector of pointers to each input row in the data_ RowContainer.
-  std::vector<char*> rows_;
+  // TablePartitionBuild is used to store input rows and return
+  // TableFunctionPartitions for the processing.
+  std::unique_ptr<TablePartitionBuild> tablePartitionBuild_;
 
   std::unique_ptr<TableFunctionPartition> tableFunctionPartition_;
 

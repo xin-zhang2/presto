@@ -40,6 +40,9 @@ LeafTableFunctionOperator::LeafTableFunctionOperator(
       tableFunctionNode_(tableFunctionNode),
       result_(nullptr) {
   VELOX_CHECK(tableFunctionNode->sources().empty());
+  VELOX_CHECK(tableFunctionNode->partitionKeys().empty());
+  VELOX_CHECK(tableFunctionNode->sortingKeys().empty());
+  VELOX_CHECK(tableFunctionNode->sortingOrders().empty());
 }
 
 void LeafTableFunctionOperator::initialize() {
