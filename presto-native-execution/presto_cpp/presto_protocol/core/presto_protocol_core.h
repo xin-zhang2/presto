@@ -366,6 +366,11 @@ void from_json(
     const json& j,
     std::shared_ptr<ConnectorMetadataUpdateHandle>& p);
 } // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
+struct ConnectorTableFunctionHandle : public JsonEncodedSubclass {};
+void to_json(json& j, const std::shared_ptr<ConnectorTableFunctionHandle>& p);
+void from_json(const json& j, std::shared_ptr<ConnectorTableFunctionHandle>& p);
+} // namespace facebook::presto::protocol
 
 namespace facebook::presto::protocol {
 struct AbstractConnectorTableFunction {
@@ -1920,6 +1925,22 @@ void to_json(json& j, const PartialAggregationStatsEstimate& p);
 void from_json(const json& j, PartialAggregationStatsEstimate& p);
 } // namespace facebook::presto::protocol
 namespace facebook::presto::protocol {
+struct PassThroughColumn {
+  VariableReferenceExpression outputVariables = {};
+  bool partitioningColumn = {};
+};
+void to_json(json& j, const PassThroughColumn& p);
+void from_json(const json& j, PassThroughColumn& p);
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
+struct PassThroughSpecification {
+  bool declaredAsPassThrough = {};
+  List<PassThroughColumn> columns = {};
+};
+void to_json(json& j, const PassThroughSpecification& p);
+void from_json(const json& j, PassThroughSpecification& p);
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
 struct PipelineStats {
   int pipelineId = {};
   int64_t firstStartTimeInMillis = {};
@@ -2219,6 +2240,25 @@ void to_json(json& j, const SemiJoinNode& p);
 void from_json(const json& j, SemiJoinNode& p);
 } // namespace facebook::presto::protocol
 namespace facebook::presto::protocol {
+struct SequenceFunctionHandle : public ConnectorTableFunctionHandle {
+  int64_t start = {};
+  int64_t stop = {};
+  int64_t step = {};
+
+  SequenceFunctionHandle() noexcept;
+};
+void to_json(json& j, const SequenceFunctionHandle& p);
+void from_json(const json& j, SequenceFunctionHandle& p);
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
+struct SequenceFunctionSplit {
+  int64_t start = {};
+  int64_t stop = {};
+};
+void to_json(json& j, const SequenceFunctionSplit& p);
+void from_json(const json& j, SequenceFunctionSplit& p);
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
 struct ServerInfo {
   NodeVersion nodeVersion = {};
   String environment = {};
@@ -2399,6 +2439,18 @@ void to_json(json& j, const TableArgument& p);
 void from_json(const json& j, TableArgument& p);
 } // namespace facebook::presto::protocol
 namespace facebook::presto::protocol {
+struct TableArgumentProperties {
+  String argumentName = {};
+  bool rowSemantics = {};
+  bool pruneWhenEmpty = {};
+  PassThroughSpecification passThroughSpecification = {};
+  List<VariableReferenceExpression> requiredColumns = {};
+  std::shared_ptr<DataOrganizationSpecification> specification = {};
+};
+void to_json(json& j, const TableArgumentProperties& p);
+void from_json(const json& j, TableArgumentProperties& p);
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
 struct TableArgumentSpecification : public ArgumentSpecification {
   String name = {};
   bool rowSemantics = {};
@@ -2409,6 +2461,51 @@ struct TableArgumentSpecification : public ArgumentSpecification {
 };
 void to_json(json& j, const TableArgumentSpecification& p);
 void from_json(const json& j, TableArgumentSpecification& p);
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
+struct TableFunctionHandle {
+  ConnectorId connectorId = {};
+  std::shared_ptr<ConnectorTableFunctionHandle> functionHandle = {};
+  std::shared_ptr<ConnectorTransactionHandle> transactionHandle = {};
+};
+void to_json(json& j, const TableFunctionHandle& p);
+void from_json(const json& j, TableFunctionHandle& p);
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
+struct TableFunctionNode : public PlanNode {
+  String name = {};
+  Map<String, std::shared_ptr<Argument>> arguments = {};
+  List<VariableReferenceExpression> outputVariables = {};
+  List<std::shared_ptr<PlanNode>> sources = {};
+  List<TableArgumentProperties> tableArgumentProperties = {};
+  List<List<String>> copartitioningLists = {};
+  TableFunctionHandle handle = {};
+
+  TableFunctionNode() noexcept;
+};
+void to_json(json& j, const TableFunctionNode& p);
+void from_json(const json& j, TableFunctionNode& p);
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
+struct TableFunctionProcessorNode : public PlanNode {
+  String name = {};
+  List<VariableReferenceExpression> properOutputs = {};
+  std::shared_ptr<std::shared_ptr<PlanNode>> source = {};
+  bool pruneWhenEmpty = {};
+  List<PassThroughSpecification> passThroughSpecifications = {};
+  List<List<VariableReferenceExpression>> requiredVariables = {};
+  std::shared_ptr<Map<VariableReferenceExpression, VariableReferenceExpression>>
+      markerVariables = {};
+  std::shared_ptr<DataOrganizationSpecification> specification = {};
+  List<VariableReferenceExpression> prePartitioned = {};
+  int preSorted = {};
+  std::shared_ptr<VariableReferenceExpression> hashSymbol = {};
+  TableFunctionHandle handle = {};
+
+  TableFunctionProcessorNode() noexcept;
+};
+void to_json(json& j, const TableFunctionProcessorNode& p);
+void from_json(const json& j, TableFunctionProcessorNode& p);
 } // namespace facebook::presto::protocol
 namespace facebook::presto::protocol {
 struct TableScanNode : public PlanNode {
