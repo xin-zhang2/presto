@@ -1769,6 +1769,49 @@ VeloxQueryPlanConverterBase::toVeloxQueryPlan(
       toVeloxQueryPlan(node->source, tableWriteInfo, taskId));
 }
 
+std::shared_ptr<const tvf::TableFunctionProcessorNode>
+VeloxQueryPlanConverterBase::toVeloxQueryPlan(
+    const std::shared_ptr<const protocol::TableFunctionProcessorNode>& node,
+    const std::shared_ptr<protocol::TableWriteInfo>& tableWriteInfo,
+    const protocol::TaskId& taskId) {
+  const auto outputType = toRowType(node->properOutputs, typeParser_);
+
+  std::vector<column_index_t> requiredColumns;
+  std::vector<core::PlanNodePtr> sources;
+  if (node->source) {
+    const auto sourceNode = toVeloxQueryPlan(*node->source, tableWriteInfo, taskId);
+    const auto inputType = sourceNode->outputType();
+    for (const auto& variables : node->requiredVariables) {
+      for (const auto& expr : toVeloxExprs(variables)) {
+        requiredColumns.push_back(exprToChannel(expr.get(), inputType));
+      }
+    }
+  }
+
+  // TODO: deserialize node->handle.functionHandle to construct the handle
+  const auto tableFunctionHandlePtr = nullptr;
+
+  auto partitionKeys = toVeloxExprs(node->specification->partitionBy);
+
+  std::vector<core::FieldAccessTypedExprPtr> sortingKeys;
+  std::vector<core::SortOrder> sortingOrders;
+  for (const auto& orderby : node->specification->orderingScheme->orderBy) {
+    sortingKeys.emplace_back(exprConverter_.toVeloxExpr(orderby.variable));
+    sortingOrders.push_back(toVeloxSortOrder(orderby.sortOrder));
+  }
+
+  return std::make_shared<tvf::TableFunctionProcessorNode>(
+    node->id,
+    node->name,
+    tableFunctionHandlePtr,
+    partitionKeys,
+    sortingKeys,
+    sortingOrders,
+    outputType,
+    requiredColumns,
+    sources);
+}
+
 core::PlanNodePtr VeloxQueryPlanConverterBase::toVeloxQueryPlan(
     const std::shared_ptr<const protocol::PlanNode>& node,
     const std::shared_ptr<protocol::TableWriteInfo>& tableWriteInfo,
