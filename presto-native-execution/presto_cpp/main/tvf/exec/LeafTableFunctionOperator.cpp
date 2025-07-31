@@ -27,30 +27,30 @@ using namespace facebook::velox::exec;
 LeafTableFunctionOperator::LeafTableFunctionOperator(
     int32_t operatorId,
     DriverCtx* driverCtx,
-    const TableFunctionProcessorNodePtr& tableFunctionNode)
+    const TableFunctionProcessorNodePtr& tableFunctionProcessorNode)
     : SourceOperator(
           driverCtx,
-          tableFunctionNode->outputType(),
+          tableFunctionProcessorNode->outputType(),
           operatorId,
-          tableFunctionNode->id(),
+          tableFunctionProcessorNode->id(),
           "LeafTableFunctionOperator"),
       driverCtx_(driverCtx),
       pool_(pool()),
       stringAllocator_(pool_),
-      tableFunctionNode_(tableFunctionNode),
+      tableFunctionProcessorNode_(tableFunctionProcessorNode),
       result_(nullptr) {
-  VELOX_CHECK(tableFunctionNode->sources().empty());
-  VELOX_CHECK(tableFunctionNode->partitionKeys().empty());
-  VELOX_CHECK(tableFunctionNode->sortingKeys().empty());
-  VELOX_CHECK(tableFunctionNode->sortingOrders().empty());
+  VELOX_CHECK(tableFunctionProcessorNode->sources().empty());
+  VELOX_CHECK(tableFunctionProcessorNode->partitionKeys().empty());
+  VELOX_CHECK(tableFunctionProcessorNode->sortingKeys().empty());
+  VELOX_CHECK(tableFunctionProcessorNode->sortingOrders().empty());
 }
 
 void LeafTableFunctionOperator::initialize() {
   Operator::initialize();
-  VELOX_CHECK_NOT_NULL(tableFunctionNode_);
-  createTableFunction(tableFunctionNode_);
+  VELOX_CHECK_NOT_NULL(tableFunctionProcessorNode_);
+  createTableFunction(tableFunctionProcessorNode_);
   // TODO: Why was this needed
-  // tableFunctionNode_.reset();
+  // tableFunctionProcessorNode_.reset();
 }
 
 void LeafTableFunctionOperator::createTableFunction(

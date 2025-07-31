@@ -28,12 +28,12 @@ using namespace facebook::velox::exec;
 namespace {
 
 const RowTypePtr requiredColumnType(
-    const TableFunctionProcessorNodePtr& tableFunctionNode) {
-  VELOX_CHECK_GT(tableFunctionNode->requiredColumns().size(), 0);
-  auto columns = tableFunctionNode->requiredColumns();
+    const TableFunctionProcessorNodePtr& tableFunctionProcessorNode) {
+  VELOX_CHECK_GT(tableFunctionProcessorNode->requiredColumns().size(), 0);
+  auto columns = tableFunctionProcessorNode->requiredColumns();
 
   // TODO: This assumes single source.
-  auto inputType = tableFunctionNode->sources()[0]->outputType();
+  auto inputType = tableFunctionProcessorNode->sources()[0]->outputType();
   std::vector<std::string> names;
   std::vector<TypePtr> types;
   for (const auto& idx : columns) {
@@ -47,29 +47,29 @@ const RowTypePtr requiredColumnType(
 TableFunctionOperator::TableFunctionOperator(
     int32_t operatorId,
     DriverCtx* driverCtx,
-    const TableFunctionProcessorNodePtr& tableFunctionNode)
+    const TableFunctionProcessorNodePtr& tableFunctionProcessorNode)
     : Operator(
           driverCtx,
-          tableFunctionNode->outputType(),
+          tableFunctionProcessorNode->outputType(),
           operatorId,
-          tableFunctionNode->id(),
+          tableFunctionProcessorNode->id(),
           "TableFunctionOperator",
-          tableFunctionNode->canSpill(driverCtx->queryConfig())
+          tableFunctionProcessorNode->canSpill(driverCtx->queryConfig())
               ? driverCtx->makeSpillConfig(operatorId)
               : std::nullopt),
       pool_(pool()),
       stringAllocator_(pool_),
-      tableFunctionNode_(tableFunctionNode),
-      inputType_(tableFunctionNode->sources()[0]->outputType()),
-      requiredColummType_(requiredColumnType(tableFunctionNode)),
+      tableFunctionProcessorNode_(tableFunctionProcessorNode),
+      inputType_(tableFunctionProcessorNode->sources()[0]->outputType()),
+      requiredColummType_(requiredColumnType(tableFunctionProcessorNode)),
       tableFunctionPartition_(nullptr),
       needsInput_(true),
       input_(nullptr) {
       tablePartitionBuild_ = std::make_unique<TablePartitionBuild>(
       inputType_,
-      tableFunctionNode->partitionKeys(),
-      tableFunctionNode->sortingKeys(),
-      tableFunctionNode->sortingOrders(),
+      tableFunctionProcessorNode->partitionKeys(),
+      tableFunctionProcessorNode->sortingKeys(),
+      tableFunctionProcessorNode->sortingOrders(),
       pool(),
       common::PrefixSortConfig{
           driverCtx->queryConfig().prefixSortNormalizedKeyMaxBytes(),
@@ -80,8 +80,8 @@ TableFunctionOperator::TableFunctionOperator(
 
 void TableFunctionOperator::initialize() {
   Operator::initialize();
-  VELOX_CHECK_NOT_NULL(tableFunctionNode_);
-  createTableFunction(tableFunctionNode_);
+  VELOX_CHECK_NOT_NULL(tableFunctionProcessorNode_);
+  createTableFunction(tableFunctionProcessorNode_);
 }
 
 void TableFunctionOperator::createTableFunction(
