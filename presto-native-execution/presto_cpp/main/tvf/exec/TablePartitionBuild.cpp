@@ -270,7 +270,7 @@ std::shared_ptr<TableFunctionPartition> TablePartitionBuild::nextPartition() {
       sortedRows_.data() + partitionStartRows_[currentPartition_],
       partitionSize);
   return std::make_shared<TableFunctionPartition>(
-      data_.get(), partition, inversedInputChannels_, sortKeyInfo_);
+      data_.get(), partition, inversedInputChannels_);
 }
 
 bool TablePartitionBuild::hasNextPartition() {

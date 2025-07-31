@@ -69,8 +69,6 @@ class TableFunctionOperator : public velox::exec::Operator {
 
   void assembleInput();
 
-  void clear();
-
   velox::memory::MemoryPool* pool_;
   // HashStringAllocator required by functions that allocate out of line
   // buffers.
@@ -88,7 +86,7 @@ class TableFunctionOperator : public velox::exec::Operator {
   // TableFunctionPartitions for the processing.
   std::unique_ptr<TablePartitionBuild> tablePartitionBuild_;
 
-  std::unique_ptr<TableFunctionPartition> tableFunctionPartition_;
+  std::shared_ptr<TableFunctionPartition> tableFunctionPartition_;
 
   // The TableFunction operator processes input rows one batch at a time.
   // Algorithm : addInput -> batches input in RowContainer. Sets needsInput_ to
@@ -98,12 +96,16 @@ class TableFunctionOperator : public velox::exec::Operator {
   // process call when getOutput.
   bool needsInput_;
 
-  std::shared_ptr<TableFunctionResult> result_;
-
   velox::RowVectorPtr input_;
 
   // This should be constructed for each partition.
   std::unique_ptr<TableFunction> function_;
+
+  velox::vector_size_t numRows_ = 0;
+  velox::vector_size_t numProcessedRows_ = 0;
+  velox::vector_size_t numPartitionProcessedRows_ = 0;
+  // Number of rows that be fit into an output block.
+  velox::vector_size_t numRowsPerOutput_;
 };
 
 } // namespace facebook::presto::tvf

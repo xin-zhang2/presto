@@ -53,6 +53,16 @@ class TablePartitionBuild {
   /// called when no partition is available.
   std::shared_ptr<TableFunctionPartition> nextPartition();
 
+  velox::vector_size_t numRows() {
+    return numRows_;
+  }
+
+  /// Returns the average size of input rows in bytes stored in the data
+  /// container of the WindowBuild.
+  std::optional<int64_t> estimateRowSize() {
+    return data_->estimateRowSize();
+  }
+
  private:
 
   // Main sorting function loop done after all input rows are received

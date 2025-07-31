@@ -63,15 +63,8 @@ TableFunctionOperator::TableFunctionOperator(
       tableFunctionNode_(tableFunctionNode),
       inputType_(tableFunctionNode->sources()[0]->outputType()),
       requiredColummType_(requiredColumnType("t1", tableFunctionNode)),
-      data_(std::make_unique<RowContainer>(
-          requiredColummType_->children(),
-          pool_)),
-      decodedInputVectors_(requiredColummType_->children().size()),
-      rows_(0),
-      tableFunctionPartition_(
-          std::make_unique<TableFunctionPartition>(data_.get())),
       needsInput_(true),
-      result_(nullptr),
+      tableFunctionPartition_(nullptr),
       input_(nullptr) {
   tablePartitionBuild_ = std::make_unique<TablePartitionBuild>(
       requiredColummType_,
@@ -83,14 +76,13 @@ TableFunctionOperator::TableFunctionOperator(
           driverCtx->queryConfig().prefixSortNormalizedKeyMaxBytes(),
           driverCtx->queryConfig().prefixSortMinRows(),
           driverCtx->queryConfig().prefixSortMaxStringPrefixLength()});
+  numRowsPerOutput_ = outputBatchRows(tablePartitionBuild_->estimateRowSize());
 }
 
 void TableFunctionOperator::initialize() {
   Operator::initialize();
   VELOX_CHECK_NOT_NULL(tableFunctionNode_);
   createTableFunction(tableFunctionNode_);
-  // TODO: Why was this needed
-  // tableFunctionNode_.reset();
 }
 
 void TableFunctionOperator::createTableFunction(
@@ -110,39 +102,32 @@ void TableFunctionOperator::createTableFunction(
 // simple model for now.
 void TableFunctionOperator::addInput(RowVectorPtr input) {
   VELOX_CHECK(needsInput_);
+  numRows_ += input->size();
 
   tablePartitionBuild_->addInput(input);
 }
 
 void TableFunctionOperator::noMoreInput() {
   Operator::noMoreInput();
+  tablePartitionBuild_->noMoreInput();
 
   needsInput_ = false;
 }
 
 void TableFunctionOperator::assembleInput() {
+  VELOX_CHECK(tableFunctionPartition_);
+
+  const auto numRowsLeft = tableFunctionPartition_->numRows() - numPartitionProcessedRows_;
+  VELOX_CHECK_GT(numRowsLeft, 0);
+  const auto numOutputRows = std::min(numRowsPerOutput_, numRowsLeft);
   auto input =
-      BaseVector::create<RowVector>(requiredColummType_, rows_.size(), pool_);
-  for (int i = 0; i < decodedInputVectors_.size(); i++) {
-    input->childAt(i)->resize(rows_.size());
+      BaseVector::create<RowVector>(requiredColummType_, numOutputRows, pool_);
+  for (int i = 0; i < requiredColummType_->children().size(); i++) {
+    input->childAt(i)->resize(numOutputRows);
     tableFunctionPartition_->extractColumn(
-        i, 0, rows_.size(), 0, input->childAt(i));
+        i, 0, numOutputRows, 0, input->childAt(i));
   }
   input_ = std::move(input);
-}
-
-void TableFunctionOperator::clear() {
-  result_ = nullptr;
-  input_ = nullptr;
-
-  tableFunctionPartition_->clear();
-  needsInput_ = true;
-
-  if (noMoreInput_) {
-    data_->clear();
-    data_->pool()->release();
-    needsInput_ = false;
-  }
 }
 
 RowVectorPtr TableFunctionOperator::getOutput() {
@@ -150,9 +135,29 @@ RowVectorPtr TableFunctionOperator::getOutput() {
     return nullptr;
   }
 
-  // This is the first call to TableFunction::apply or a previous
-  // apply for this input has completed.
-  if (result_ == nullptr) {
+  if (numRows_ == 0) {
+    return nullptr;
+  }
+
+  const auto numRowsLeft = numRows_ - numProcessedRows_;
+  if (numRowsLeft == 0) {
+    return nullptr;
+  }
+
+  if (tableFunctionPartition_ == nullptr ||
+      (!input_ && (tableFunctionPartition_->numRows() - numPartitionProcessedRows_ == 0))) {
+    if (tablePartitionBuild_->hasNextPartition()) {
+      tableFunctionPartition_ = tablePartitionBuild_->nextPartition();
+      numPartitionProcessedRows_ = 0;
+    } else {
+      // There is no partition to output.
+      return nullptr;
+    }
+  }
+
+  // This is the first call to TableFunction::apply for this partition
+  // or a previous apply for this input has completed.
+  if (input_ == nullptr) {
     VELOX_CHECK(!needsInput_);
     assembleInput();
   }
@@ -160,8 +165,8 @@ RowVectorPtr TableFunctionOperator::getOutput() {
   VELOX_CHECK(function_);
   auto result = function_->apply({input_});
   if (result->state() == TableFunctionResult::TableFunctionState::kFinished) {
-    noMoreInput_ = true;
-    clear();
+    input_ = nullptr;
+    // We should skip the rest of this partition processing... Add that logic.
     return nullptr;
   }
 
@@ -169,14 +174,13 @@ RowVectorPtr TableFunctionOperator::getOutput() {
       result->state() == TableFunctionResult::TableFunctionState::kProcessed);
   auto resultRows = result->result();
   VELOX_CHECK(resultRows);
-  if (!result->usedInput()) {
-    // Since the input rows are not completely consumed, the result_
-    // should be maintained.
-    result_ = result;
-  } else {
-    clear();
+  if (result->usedInput()) {
+    // The input rows were consumed, so we need to re-assemble input at the
+    // next call.
+    input_ = nullptr;
+    numPartitionProcessedRows_ += input_->size();
+    numProcessedRows_ += input_->size();
   }
-
   return std::move(resultRows);
 }
 
