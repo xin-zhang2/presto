@@ -51,6 +51,7 @@ target_link_libraries(
   GTest::gtest_main
   presto_connectors
   $<TARGET_OBJECTS:presto_protocol>
+  $<TARGET_OBJECTS:presto_tvf_core>
   $<TARGET_OBJECTS:presto_type_converter>
   $<TARGET_OBJECTS:presto_types>
   presto_operators

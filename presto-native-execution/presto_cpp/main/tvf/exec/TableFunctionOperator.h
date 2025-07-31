@@ -31,7 +31,7 @@ class TableFunctionOperator : public velox::exec::Operator {
   TableFunctionOperator(
       int32_t operatorId,
       velox::exec::DriverCtx* driverCtx,
-      const std::shared_ptr<const TableFunctionProcessorNode>& tableFunctionNode);
+      const std::shared_ptr<const TableFunctionProcessorNode>& tableFunctionProcessorNode);
 
   void initialize() override;
 
@@ -65,7 +65,7 @@ class TableFunctionOperator : public velox::exec::Operator {
   }
 
   void createTableFunction(
-      const std::shared_ptr<const TableFunctionProcessorNode>& tableFunctionNode);
+      const std::shared_ptr<const TableFunctionProcessorNode>& tableFunctionProcessorNode);
 
   void assembleInput();
 
@@ -74,7 +74,7 @@ class TableFunctionOperator : public velox::exec::Operator {
   // buffers.
   velox::HashStringAllocator stringAllocator_;
 
-  std::shared_ptr<const TableFunctionProcessorNode> tableFunctionNode_;
+  std::shared_ptr<const TableFunctionProcessorNode> tableFunctionProcessorNode_;
 
   // TODO : Figure how this works for a multi-input table parameter case.
   velox::RowTypePtr inputType_;

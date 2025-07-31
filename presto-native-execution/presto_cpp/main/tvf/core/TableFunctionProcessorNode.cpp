@@ -21,21 +21,21 @@ using namespace facebook::velox::core;
 
 TableFunctionProcessorNode::TableFunctionProcessorNode(
     PlanNodeId id,
-    const std::string& name,
+    std::string name,
     TableFunctionHandlePtr handle,
     std::vector<velox::core::FieldAccessTypedExprPtr> partitionKeys,
     std::vector<velox::core::FieldAccessTypedExprPtr> sortingKeys,
     std::vector<velox::core::SortOrder> sortingOrders,
     velox::RowTypePtr outputType,
-    RequiredColumnsMap requiredColumns,
+    std::vector<column_index_t> requiredColumns,
     std::vector<PlanNodePtr> sources)
     : PlanNode(std::move(id)),
-      functionName_(name),
+      functionName_(std::move(name)),
       handle_(std::move(handle)),
       partitionKeys_(std::move(partitionKeys)),
       sortingKeys_(std::move(sortingKeys)),
       sortingOrders_(std::move(sortingOrders)),
-      outputType_(outputType),
+      outputType_(std::move(outputType)),
       requiredColumns_(std::move(requiredColumns)),
       sources_{std::move(sources)} {
   VELOX_CHECK_EQ(
@@ -150,14 +150,7 @@ folly::dynamic TableFunctionProcessorNode::serialize() const {
   obj["functionName"] = functionName_.data();
   obj["outputType"] = outputType_->serialize();
 
-  folly::dynamic requiredColumns = folly::dynamic::array;
-  for (const auto& [tableName, columns] : requiredColumns_) {
-    folly::dynamic pair = folly::dynamic::object;
-    pair["tableName"] = tableName;
-    pair["columnNames"] = ISerializable::serialize<column_index_t>(columns);
-    requiredColumns.push_back(std::move(pair));
-  }
-  obj["requiredColumns"] = std::move(requiredColumns);
+  obj["requiredColumns"] = std::move(ISerializable::serialize(requiredColumns_));
 
   return obj;
 }
@@ -214,13 +207,7 @@ PlanNodePtr TableFunctionProcessorNode::create(
 
   auto name = obj["functionName"].asString();
 
-  std::unordered_map<std::string, std::vector<column_index_t>> requiredColumns;
-  for (const auto& pair : obj["requiredColumns"]) {
-    auto tableName = pair["tableName"].asString();
-    auto columnNames = ISerializable::deserialize<std::vector<column_index_t>>(
-        pair["columnNames"], context);
-    requiredColumns[tableName] = columnNames;
-  }
+  auto requiredColumns = deserialize<std::vector<column_index_t>>(obj["requiredColumns"]);
 
   return std::make_shared<TableFunctionProcessorNode>(
       deserializePlanNodeId(obj),
