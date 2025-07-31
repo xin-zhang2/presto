@@ -28,10 +28,9 @@ using namespace facebook::velox::exec;
 namespace {
 
 const RowTypePtr requiredColumnType(
-    const std::string& name,
     const TableFunctionProcessorNodePtr& tableFunctionNode) {
-  VELOX_CHECK_GT(tableFunctionNode->requiredColumns().count(name), 0);
-  auto columns = tableFunctionNode->requiredColumns().at(name);
+  VELOX_CHECK_GT(tableFunctionNode->requiredColumns().size(), 0);
+  auto columns = tableFunctionNode->requiredColumns();
 
   // TODO: This assumes single source.
   auto inputType = tableFunctionNode->sources()[0]->outputType();
@@ -62,12 +61,12 @@ TableFunctionOperator::TableFunctionOperator(
       stringAllocator_(pool_),
       tableFunctionNode_(tableFunctionNode),
       inputType_(tableFunctionNode->sources()[0]->outputType()),
-      requiredColummType_(requiredColumnType("t1", tableFunctionNode)),
-      needsInput_(true),
+      requiredColummType_(requiredColumnType(tableFunctionNode)),
       tableFunctionPartition_(nullptr),
+      needsInput_(true),
       input_(nullptr) {
-  tablePartitionBuild_ = std::make_unique<TablePartitionBuild>(
-      requiredColummType_,
+      tablePartitionBuild_ = std::make_unique<TablePartitionBuild>(
+      inputType_,
       tableFunctionNode->partitionKeys(),
       tableFunctionNode->sortingKeys(),
       tableFunctionNode->sortingOrders(),
@@ -181,6 +180,7 @@ RowVectorPtr TableFunctionOperator::getOutput() {
     numPartitionProcessedRows_ += input_->size();
     numProcessedRows_ += input_->size();
   }
+
   return std::move(resultRows);
 }
 

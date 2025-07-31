@@ -72,7 +72,8 @@ addTvfNode(
         sortingKeys,
         sortingOrders,
         outputType,
-        analysis->requiredColumns(),
+        std::vector<column_index_t>{},
+        // analysis->requiredColumns(),
         sources);
   };
 }
