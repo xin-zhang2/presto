@@ -221,6 +221,7 @@
         <module>presto-router-example-plugin-scheduler</module>
         <module>presto-plan-checker-router-plugin</module>
         <module>presto-spark-classloader-spark${dep.pos.classloader.module-name.suffix}</module>
+        <module>presto-native-tvf</module>
     </modules>
 
     <dependencyManagement>
