@@ -35,7 +35,6 @@ import com.facebook.presto.common.type.VarcharType;
 import com.facebook.presto.metadata.CatalogMetadata;
 import com.facebook.presto.metadata.Metadata;
 import com.facebook.presto.metadata.OperatorNotFoundException;
-import com.facebook.presto.metadata.TableFunctionMetadata;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorId;
@@ -70,6 +69,7 @@ import com.facebook.presto.spi.function.table.ScalarArgumentSpecification;
 import com.facebook.presto.spi.function.table.TableArgument;
 import com.facebook.presto.spi.function.table.TableArgumentSpecification;
 import com.facebook.presto.spi.function.table.TableFunctionAnalysis;
+import com.facebook.presto.spi.function.table.TableFunctionMetadata;
 import com.facebook.presto.spi.relation.DomainTranslator;
 import com.facebook.presto.spi.relation.RowExpression;
 import com.facebook.presto.spi.security.AccessControl;
@@ -254,7 +254,7 @@ import static com.facebook.presto.spi.connector.ConnectorTableVersion.VersionTyp
 import static com.facebook.presto.spi.function.FunctionKind.AGGREGATE;
 import static com.facebook.presto.spi.function.FunctionKind.WINDOW;
 import static com.facebook.presto.spi.function.table.DescriptorArgument.NULL_DESCRIPTOR;
-import static com.facebook.presto.spi.function.table.ReturnTypeSpecification.GenericTable.GENERIC_TABLE;
+import static com.facebook.presto.spi.function.table.GenericTableReturnTypeSpecification.GENERIC_TABLE;
 import static com.facebook.presto.sql.MaterializedViewUtils.buildOwnerSession;
 import static com.facebook.presto.sql.MaterializedViewUtils.generateBaseTablePredicates;
 import static com.facebook.presto.sql.MaterializedViewUtils.generateFalsePredicates;
@@ -1356,14 +1356,10 @@ class StatementAnalyzer
         @Override
         protected Scope visitTableFunctionInvocation(TableFunctionInvocation node, Optional<Scope> scope)
         {
-            TableFunctionMetadata tableFunctionMetadata = metadata.getFunctionAndTypeManager()
-                    .getTableFunctionRegistry()
-                    .resolve(session, node.getName())
-                    .orElseThrow(() -> new SemanticException(
-                            FUNCTION_NOT_FOUND,
-                            node,
-                            "Table function %s not registered",
-                            node.getName()));
+            TableFunctionMetadata tableFunctionMetadata = metadata.getFunctionAndTypeManager().resolveTableFunction(session, node.getName());
+            if (tableFunctionMetadata == null) {
+                throw new SemanticException(FUNCTION_NOT_FOUND, node, "Table function %s not registered", node.getName());
+            }
 
             ConnectorTableFunction function = tableFunctionMetadata.getFunction();
             ConnectorId connectorId = tableFunctionMetadata.getConnectorId();

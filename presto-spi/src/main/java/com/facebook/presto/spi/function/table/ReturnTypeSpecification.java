@@ -13,6 +13,9 @@
  */
 package com.facebook.presto.spi.function.table;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import static com.facebook.presto.spi.function.table.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
@@ -25,6 +28,14 @@ import static java.util.Objects.requireNonNull;
  * dynamically determined at analysis time (GenericTable), or simply passed through
  * from input tables without adding new columns (OnlyPassThrough).
  */
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "@type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = GenericTableReturnTypeSpecification.class, name = "generic_table"),
+        @JsonSubTypes.Type(value = OnlyPassThroughReturnTypeSpecification.class, name = "only_pass_through_table"),
+        @JsonSubTypes.Type(value = DescribedTableReturnTypeSpecification.class, name = "described_table")})
 public abstract class ReturnTypeSpecification
 {
     public static final String returnType = "Abstract";
