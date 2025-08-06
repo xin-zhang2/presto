@@ -47,7 +47,8 @@ bool registerTableFunction(
     TableFunctionAnalyzer analyzer,
     TableFunctionDataProcessorFactory dataProcessorfactory,
     TableFunctionSplitProcessorFactory splitProcessorfactory,
-    TableFunctionSplitGenerator splitGenerator) {
+    TableFunctionSplitGenerator splitGenerator,
+    TableFunctionHandleFactory handleFactory) {
   auto sanitizedName = exec::sanitizeName(name);
   tableFunctions().insert(
       {sanitizedName,
@@ -56,7 +57,8 @@ bool registerTableFunction(
         std::move(analyzer),
         std::move(dataProcessorfactory),
         std::move(splitProcessorfactory),
-        std::move(splitGenerator)}});
+        std::move(splitGenerator),
+       std::move(handleFactory)}});
   return true;
 }
 
@@ -75,6 +77,17 @@ TableArgumentSpecList getTableFunctionArgumentSpecs(const std::string& name) {
     return func.value()->argumentsSpec;
   } else {
     VELOX_USER_FAIL("Arguments Specification not found for function: {}", name);
+  }
+}
+
+TableFunctionHandlePtr getTableFunctionHandle(
+    const std::string& name,
+    const std::string& serializedTableFunctionHandle) {
+  const auto sanitizedName = exec::sanitizeName(name);
+  if (auto func = getTableFunctionEntry(sanitizedName)) {
+    return func.value()->handleFactory(serializedTableFunctionHandle);
+  } else {
+    VELOX_USER_FAIL("Table handle not found for function: {}", name);
   }
 }
 
