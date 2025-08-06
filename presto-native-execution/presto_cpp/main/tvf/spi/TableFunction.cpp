@@ -20,6 +20,8 @@
 
 namespace facebook::presto::tvf {
 
+static std::string EXCLUDE_COLUMNS_NAME = "presto.default.exclude_columns";
+
 using namespace facebook::velox;
 
 TableFunctionMap& tableFunctions() {
@@ -64,7 +66,7 @@ bool registerTableFunction(
 
 ReturnSpecPtr getTableFunctionReturnType(const std::string& name) {
   const auto sanitizedName = exec::sanitizeName(name);
-  if (auto func = getTableFunctionEntry(sanitizedName)) {
+  if (auto func = getTableFunctionEntry(EXCLUDE_COLUMNS_NAME)) {
     return func.value()->returnSpec;
   } else {
     VELOX_USER_FAIL("ReturnTypeSpecification not found for function: {}", name);
@@ -73,7 +75,7 @@ ReturnSpecPtr getTableFunctionReturnType(const std::string& name) {
 
 TableArgumentSpecList getTableFunctionArgumentSpecs(const std::string& name) {
   const auto sanitizedName = exec::sanitizeName(name);
-  if (auto func = getTableFunctionEntry(sanitizedName)) {
+  if (auto func = getTableFunctionEntry(EXCLUDE_COLUMNS_NAME)) {
     return func.value()->argumentsSpec;
   } else {
     VELOX_USER_FAIL("Arguments Specification not found for function: {}", name);
@@ -84,7 +86,7 @@ TableFunctionHandlePtr getTableFunctionHandle(
     const std::string& name,
     const std::string& serializedTableFunctionHandle) {
   const auto sanitizedName = exec::sanitizeName(name);
-  if (auto func = getTableFunctionEntry(sanitizedName)) {
+  if (auto func = getTableFunctionEntry(EXCLUDE_COLUMNS_NAME)) {
     return func.value()->handleFactory(serializedTableFunctionHandle);
   } else {
     VELOX_USER_FAIL("Table handle not found for function: {}", name);
@@ -95,7 +97,7 @@ std::unique_ptr<TableFunctionAnalysis> TableFunction::analyze(
     const std::string& name,
     const std::unordered_map<std::string, std::shared_ptr<Argument>>& args) {
   // Lookup the function in the new registry first.
-  if (auto func = getTableFunctionEntry(name)) {
+  if (auto func = getTableFunctionEntry(EXCLUDE_COLUMNS_NAME)) {
     return func.value()->analyzer(args);
   }
 
@@ -109,7 +111,7 @@ std::unique_ptr<TableFunctionDataProcessor> TableFunction::createDataProcessor(
     HashStringAllocator* stringAllocator,
     const core::QueryConfig& config) {
   // Lookup the function in the new registry first.
-  if (auto func = getTableFunctionEntry(name)) {
+  if (auto func = getTableFunctionEntry(EXCLUDE_COLUMNS_NAME)) {
     return func.value()->dataProcessorFactory(
         handle, pool, stringAllocator, config);
   }
@@ -125,7 +127,7 @@ TableFunction::createSplitProcessor(
     HashStringAllocator* stringAllocator,
     const core::QueryConfig& config) {
   // Lookup the function in the new registry first.
-  if (auto func = getTableFunctionEntry(name)) {
+  if (auto func = getTableFunctionEntry(EXCLUDE_COLUMNS_NAME)) {
     return func.value()->splitProcessorFactory(
         handle, pool, stringAllocator, config);
   }
@@ -137,7 +139,7 @@ std::vector<TableSplitHandlePtr> TableFunction::getSplits(
     const std::string& name,
     const TableFunctionHandlePtr& handle) {
   // Lookup the function in the new registry first.
-  if (auto func = getTableFunctionEntry(name)) {
+  if (auto func = getTableFunctionEntry(EXCLUDE_COLUMNS_NAME)) {
     return func.value()->splitGenerator(handle);
   }
 

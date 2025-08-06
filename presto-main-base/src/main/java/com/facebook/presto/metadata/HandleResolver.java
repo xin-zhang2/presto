@@ -220,7 +220,8 @@ public class HandleResolver
         for (Entry<String, MaterializedResolver<ConnectorSplit>> entry : tableFunctionSplitResolvers.entrySet()) {
             MaterializedResolver<ConnectorSplit> resolver = entry.getValue();
             Optional<Class<? extends ConnectorSplit>> tableFunctionSplit = resolver.getClasses().stream()
-                    .filter(handle -> (entry.getKey() + ":" + handle.getName()).equals(id))
+                    //.filter(handle -> (entry.getKey() + ":" + handle.getName()).equals(id))
+                    .filter(handle -> (handle.getName()).equals(id))
                     .findFirst();
             if (tableFunctionSplit.isPresent()) {
                 return tableFunctionSplit.get();
@@ -275,7 +276,8 @@ public class HandleResolver
         for (Entry<String, MaterializedResolver<ConnectorTableFunctionHandle>> entry : tableFunctionHandleResolvers.entrySet()) {
             MaterializedResolver<ConnectorTableFunctionHandle> resolver = entry.getValue();
             Optional<Class<? extends ConnectorTableFunctionHandle>> tableFunctionHandle = resolver.getClasses().stream()
-                    .filter(handle -> (entry.getKey() + ":" + handle.getName()).equals(id))
+                    //.filter(handle -> (entry.getKey() + ":" + handle.getName()).equals(id))
+                    .filter(handle -> (handle.getName()).equals(id))
                     .findFirst();
             if (tableFunctionHandle.isPresent()) {
                 return tableFunctionHandle.get();
@@ -337,7 +339,8 @@ public class HandleResolver
                         .map(Class::getName)
                         .findFirst();
                 if (id.isPresent()) {
-                    return entry.getKey() + ":" + id.get();
+                    // return entry.getKey() + ":" + id.get();
+                    return id.get();
                 }
             }
             catch (UnsupportedOperationException ignored) {
