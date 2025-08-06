@@ -24,13 +24,13 @@ class TableFunctionProcessorNode : public velox::core::PlanNode {
  public:
   TableFunctionProcessorNode(
       velox::core::PlanNodeId id,
-      const std::string& name,
+      std::string  name,
       TableFunctionHandlePtr handle,
       std::vector<velox::core::FieldAccessTypedExprPtr> partitionKeys,
       std::vector<velox::core::FieldAccessTypedExprPtr> sortingKeys,
       std::vector<velox::core::SortOrder> sortingOrders,
       velox::RowTypePtr outputType,
-      RequiredColumnsMap requiredColumns,
+      std::vector<velox::column_index_t> requiredColumns,
       std::vector<velox::core::PlanNodePtr> sources);
 
   const std::vector<velox::core::PlanNodePtr>& sources() const override {
@@ -74,7 +74,7 @@ class TableFunctionProcessorNode : public velox::core::PlanNode {
     return sortingOrders_;
   }
 
-  const RequiredColumnsMap requiredColumns() const {
+  const std::vector<velox::column_index_t>& requiredColumns() const {
     return requiredColumns_;
   }
 
@@ -106,7 +106,7 @@ class TableFunctionProcessorNode : public velox::core::PlanNode {
 
   const velox::RowTypePtr outputType_;
 
-  const RequiredColumnsMap requiredColumns_;
+  const std::vector<velox::column_index_t> requiredColumns_;
 
   const std::vector<velox::core::PlanNodePtr> sources_;
 };

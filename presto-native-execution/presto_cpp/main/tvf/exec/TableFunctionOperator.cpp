@@ -28,13 +28,12 @@ using namespace facebook::velox::exec;
 namespace {
 
 const RowTypePtr requiredColumnType(
-    const std::string& name,
-    const TableFunctionProcessorNodePtr& tableFunctionNode) {
-  VELOX_CHECK_GT(tableFunctionNode->requiredColumns().count(name), 0);
-  auto columns = tableFunctionNode->requiredColumns().at(name);
+    const TableFunctionProcessorNodePtr& tableFunctionProcessorNode) {
+  VELOX_CHECK_GT(tableFunctionProcessorNode->requiredColumns().size(), 0);
+  auto columns = tableFunctionProcessorNode->requiredColumns();
 
   // TODO: This assumes single source.
-  auto inputType = tableFunctionNode->sources()[0]->outputType();
+  auto inputType = tableFunctionProcessorNode->sources()[0]->outputType();
   std::vector<std::string> names;
   std::vector<TypePtr> types;
   for (const auto& idx : columns) {
@@ -48,28 +47,28 @@ const RowTypePtr requiredColumnType(
 TableFunctionOperator::TableFunctionOperator(
     int32_t operatorId,
     DriverCtx* driverCtx,
-    const TableFunctionProcessorNodePtr& tableFunctionNode)
+    const TableFunctionProcessorNodePtr& tableFunctionProcessorNode)
     : Operator(
           driverCtx,
-          tableFunctionNode->outputType(),
+          tableFunctionProcessorNode->outputType(),
           operatorId,
-          tableFunctionNode->id(),
+          tableFunctionProcessorNode->id(),
           "TableFunctionOperator",
-          tableFunctionNode->canSpill(driverCtx->queryConfig())
+          tableFunctionProcessorNode->canSpill(driverCtx->queryConfig())
               ? driverCtx->makeSpillConfig(operatorId)
               : std::nullopt),
       pool_(pool()),
       stringAllocator_(pool_),
-      tableFunctionNode_(tableFunctionNode),
-      inputType_(tableFunctionNode->sources()[0]->outputType()),
-      requiredColummType_(requiredColumnType("t1", tableFunctionNode)),
+      tableFunctionProcessorNode_(tableFunctionProcessorNode),
+      inputType_(tableFunctionProcessorNode->sources()[0]->outputType()),
+      requiredColummType_(requiredColumnType(tableFunctionProcessorNode)),
       tableFunctionPartition_(nullptr),
       input_(nullptr) {
-  tablePartitionBuild_ = std::make_unique<TablePartitionBuild>(
+      tablePartitionBuild_ = std::make_unique<TablePartitionBuild>(
       inputType_,
-      tableFunctionNode->partitionKeys(),
-      tableFunctionNode->sortingKeys(),
-      tableFunctionNode->sortingOrders(),
+      tableFunctionProcessorNode->partitionKeys(),
+      tableFunctionProcessorNode->sortingKeys(),
+      tableFunctionProcessorNode->sortingOrders(),
       pool(),
       common::PrefixSortConfig{
           driverCtx->queryConfig().prefixSortNormalizedKeyMaxBytes(),
@@ -80,7 +79,7 @@ TableFunctionOperator::TableFunctionOperator(
 
 void TableFunctionOperator::initialize() {
   Operator::initialize();
-  VELOX_CHECK_NOT_NULL(tableFunctionNode_);
+  VELOX_CHECK_NOT_NULL(tableFunctionProcessorNode_);
 }
 
 void TableFunctionOperator::createTableFunctionDataProcessor(
@@ -119,7 +118,7 @@ void TableFunctionOperator::assembleInput() {
   auto input =
       BaseVector::create<RowVector>(requiredColummType_, numOutputRows, pool_);
 
-  auto columns = tableFunctionNode_->requiredColumns().at("t1");
+  auto columns = tableFunctionProcessorNode_->requiredColumns();
   for (int i = 0; i < requiredColummType_->children().size(); i++) {
     input->childAt(i)->resize(numOutputRows);
     tableFunctionPartition_->extractColumn(
@@ -152,7 +151,7 @@ RowVectorPtr TableFunctionOperator::getOutput() {
         0))) {
     if (tablePartitionBuild_->hasNextPartition()) {
       tableFunctionPartition_ = tablePartitionBuild_->nextPartition();
-      createTableFunctionDataProcessor(tableFunctionNode_);
+      createTableFunctionDataProcessor(tableFunctionProcessorNode_);
       numPartitionProcessedRows_ = 0;
     } else {
       // There is no partition to output.
@@ -188,6 +187,7 @@ RowVectorPtr TableFunctionOperator::getOutput() {
     numProcessedRows_ += input_->size();
     input_ = nullptr;
   }
+
   return std::move(resultRows);
 }
 

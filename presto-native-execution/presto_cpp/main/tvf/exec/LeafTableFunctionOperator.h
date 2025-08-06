@@ -30,8 +30,7 @@ class LeafTableFunctionOperator : public velox::exec::SourceOperator {
   LeafTableFunctionOperator(
       int32_t operatorId,
       velox::exec::DriverCtx* driverCtx,
-      const std::shared_ptr<const TableFunctionProcessorNode>&
-          tableFunctionNode);
+      const std::shared_ptr<const TableFunctionProcessorNode>& tableFunctionProcessorNode);
 
   void initialize() override;
 
@@ -66,7 +65,7 @@ class LeafTableFunctionOperator : public velox::exec::SourceOperator {
   // buffers.
   velox::HashStringAllocator stringAllocator_;
 
-  std::shared_ptr<const TableFunctionProcessorNode> tableFunctionNode_;
+  std::shared_ptr<const TableFunctionProcessorNode> tableFunctionProcessorNode_;
 
   std::shared_ptr<TableFunctionResult> result_;
 

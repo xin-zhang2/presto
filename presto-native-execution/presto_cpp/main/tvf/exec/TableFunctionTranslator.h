@@ -30,14 +30,13 @@ class TableFunctionTranslator
       velox::exec::DriverCtx* ctx,
       int32_t id,
       const velox::core::PlanNodePtr& node) {
-    if (auto tableFunctionNodeNode =
+    if (auto tableFunctionProcessorNode =
             std::dynamic_pointer_cast<const TableFunctionProcessorNode>(node)) {
-      if (tableFunctionNodeNode->sources().empty()) {
-        return std::make_unique<LeafTableFunctionOperator>(
-            id, ctx, tableFunctionNodeNode);
+      if (tableFunctionProcessorNode->sources().empty()) {
+        return std::make_unique<LeafTableFunctionOperator>(id, ctx, tableFunctionProcessorNode);
       }
       return std::make_unique<TableFunctionOperator>(
-          id, ctx, tableFunctionNodeNode);
+          id, ctx, tableFunctionProcessorNode);
     }
     return nullptr;
   }
