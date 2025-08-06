@@ -3191,25 +3191,37 @@ void from_json(const json& j, std::shared_ptr<Argument>& p) {
 } // namespace facebook::presto::protocol
 namespace facebook::presto::protocol {
 
-void to_json(json& j, const ConnectorTableMetadata1& p) {
+void to_json(json& j, const ConnectorTableMetadata& p) {
   j = json::object();
-  to_json_key(j, "name", p.name, "ConnectorTableMetadata1", "String", "name");
+  to_json_key(
+      j,
+      "functionName",
+      p.functionName,
+      "ConnectorTableMetadata",
+      "QualifiedObjectName",
+      "functionName");
   to_json_key(
       j,
       "arguments",
       p.arguments,
-      "ConnectorTableMetadata1",
+      "ConnectorTableMetadata",
       "Map<String, std::shared_ptr<Argument>>",
       "arguments");
 }
 
-void from_json(const json& j, ConnectorTableMetadata1& p) {
-  from_json_key(j, "name", p.name, "ConnectorTableMetadata1", "String", "name");
+void from_json(const json& j, ConnectorTableMetadata& p) {
+  from_json_key(
+      j,
+      "functionName",
+      p.functionName,
+      "ConnectorTableMetadata",
+      "QualifiedObjectName",
+      "functionName");
   from_json_key(
       j,
       "arguments",
       p.arguments,
-      "ConnectorTableMetadata1",
+      "ConnectorTableMetadata",
       "Map<String, std::shared_ptr<Argument>>",
       "arguments");
 }
@@ -6771,6 +6783,57 @@ void from_json(const json& j, JoinNodeStatsEstimate& p) {
 } // namespace facebook::presto::protocol
 namespace facebook::presto::protocol {
 
+void to_json(json& j, const JsonBasedTableFunctionMetadata& p) {
+  j = json::object();
+  to_json_key(
+      j,
+      "functionName",
+      p.functionName,
+      "JsonBasedTableFunctionMetadata",
+      "QualifiedObjectName",
+      "functionName");
+  to_json_key(
+      j,
+      "arguments",
+      p.arguments,
+      "JsonBasedTableFunctionMetadata",
+      "List<std::shared_ptr<ArgumentSpecification>>",
+      "arguments");
+  to_json_key(
+      j,
+      "returnTypeSpecification",
+      p.returnTypeSpecification,
+      "JsonBasedTableFunctionMetadata",
+      "ReturnTypeSpecification",
+      "returnTypeSpecification");
+}
+
+void from_json(const json& j, JsonBasedTableFunctionMetadata& p) {
+  from_json_key(
+      j,
+      "functionName",
+      p.functionName,
+      "JsonBasedTableFunctionMetadata",
+      "QualifiedObjectName",
+      "functionName");
+  from_json_key(
+      j,
+      "arguments",
+      p.arguments,
+      "JsonBasedTableFunctionMetadata",
+      "List<std::shared_ptr<ArgumentSpecification>>",
+      "arguments");
+  from_json_key(
+      j,
+      "returnTypeSpecification",
+      p.returnTypeSpecification,
+      "JsonBasedTableFunctionMetadata",
+      "ReturnTypeSpecification",
+      "returnTypeSpecification");
+}
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
+
 void to_json(json& j, const JsonBasedUdfFunctionMetadata& p) {
   j = json::object();
   to_json_key(
@@ -7503,7 +7566,7 @@ void to_json(json& j, const NativeTableFunctionHandle& p) {
       "functionName",
       p.functionName,
       "NativeTableFunctionHandle",
-      "String",
+      "QualifiedObjectName",
       "functionName");
 }
 
@@ -7520,7 +7583,7 @@ void from_json(const json& j, NativeTableFunctionHandle& p) {
       "functionName",
       p.functionName,
       "NativeTableFunctionHandle",
-      "String",
+      "QualifiedObjectName",
       "functionName");
 }
 } // namespace facebook::presto::protocol
@@ -12708,5 +12771,41 @@ void from_json(const json& j, WindowNode& p) {
       "WindowNode",
       "int",
       "preSortedOrderPrefix");
+}
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
+// Loosly copied this here from NLOHMANN_JSON_SERIALIZE_ENUM()
+
+// NOLINTNEXTLINE: cppcoreguidelines-avoid-c-arrays
+static const std::pair<NodeState, json> NodeState_enum_table[] =
+    { // NOLINT: cert-err58-cpp
+        {NodeState::ACTIVE, "ACTIVE"},
+        {NodeState::INACTIVE, "INACTIVE"},
+        {NodeState::SHUTTING_DOWN, "SHUTTING_DOWN"}};
+void to_json(json& j, const NodeState& e) {
+  static_assert(std::is_enum<NodeState>::value, "NodeState must be an enum!");
+  const auto* it = std::find_if(
+      std::begin(NodeState_enum_table),
+      std::end(NodeState_enum_table),
+      [e](const std::pair<NodeState, json>& ej_pair) -> bool {
+        return ej_pair.first == e;
+      });
+  j = ((it != std::end(NodeState_enum_table))
+           ? it
+           : std::begin(NodeState_enum_table))
+          ->second;
+}
+void from_json(const json& j, NodeState& e) {
+  static_assert(std::is_enum<NodeState>::value, "NodeState must be an enum!");
+  const auto* it = std::find_if(
+      std::begin(NodeState_enum_table),
+      std::end(NodeState_enum_table),
+      [&j](const std::pair<NodeState, json>& ej_pair) -> bool {
+        return ej_pair.second == j;
+      });
+  e = ((it != std::end(NodeState_enum_table))
+           ? it
+           : std::begin(NodeState_enum_table))
+          ->first;
 }
 } // namespace facebook::presto::protocol

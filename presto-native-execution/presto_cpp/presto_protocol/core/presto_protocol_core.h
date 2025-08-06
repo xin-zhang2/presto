@@ -898,12 +898,12 @@ void from_json(const json& j, Column& p);
 
 } // namespace facebook::presto::protocol
 namespace facebook::presto::protocol {
-struct ConnectorTableMetadata1 {
-  String name = {};
+struct ConnectorTableMetadata {
+  QualifiedObjectName functionName = {};
   Map<String, std::shared_ptr<Argument>> arguments = {};
 };
-void to_json(json& j, const ConnectorTableMetadata1& p);
-void from_json(const json& j, ConnectorTableMetadata1& p);
+void to_json(json& j, const ConnectorTableMetadata& p);
+void from_json(const json& j, ConnectorTableMetadata& p);
 } // namespace facebook::presto::protocol
 namespace facebook::presto::protocol {
 
@@ -1724,6 +1724,15 @@ void to_json(json& j, const JoinNodeStatsEstimate& p);
 void from_json(const json& j, JoinNodeStatsEstimate& p);
 } // namespace facebook::presto::protocol
 namespace facebook::presto::protocol {
+struct JsonBasedTableFunctionMetadata {
+  QualifiedObjectName functionName = {};
+  List<std::shared_ptr<ArgumentSpecification>> arguments = {};
+  std::shared_ptr<ReturnTypeSpecification> returnTypeSpecification = {};
+};
+void to_json(json& j, const JsonBasedTableFunctionMetadata& p);
+void from_json(const json& j, JsonBasedTableFunctionMetadata& p);
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
 struct JsonBasedUdfFunctionMetadata {
   String docString = {};
   FunctionKind functionKind = {};
@@ -1864,7 +1873,7 @@ void from_json(const json& j, NativeDescriptor& p);
 namespace facebook::presto::protocol {
 struct NativeTableFunctionHandle {
   String serializedTableFunctionHandle = {};
-  String functionName = {};
+  QualifiedObjectName functionName = {};
 };
 void to_json(json& j, const NativeTableFunctionHandle& p);
 void from_json(const json& j, NativeTableFunctionHandle& p);
@@ -2778,4 +2787,9 @@ struct WindowNode : public PlanNode {
 };
 void to_json(json& j, const WindowNode& p);
 void from_json(const json& j, WindowNode& p);
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
+enum class NodeState { ACTIVE, INACTIVE, SHUTTING_DOWN };
+extern void to_json(json& j, const NodeState& e);
+extern void from_json(const json& j, NodeState& e);
 } // namespace facebook::presto::protocol
