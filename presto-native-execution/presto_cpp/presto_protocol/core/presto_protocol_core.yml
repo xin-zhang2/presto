@@ -190,7 +190,7 @@ AbstractClasses:
   ConnectorTableFunctionHandle:
     super: JsonEncodedSubclass
     subclasses:
-      - { name: NativeTableFunctionHandle, key: com.facebook.presto.tvf.NativeTableFunctionHandle }
+      - { name: NativeTableFunctionHandle, key: system:com.facebook.presto.tvf.NativeTableFunctionHandle }
 
   ValueSet:
     super: JsonEncodedSubclass

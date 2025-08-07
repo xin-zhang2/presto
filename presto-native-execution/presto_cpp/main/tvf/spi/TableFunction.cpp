@@ -66,18 +66,18 @@ ReturnSpecPtr getTableFunctionReturnType(const std::string& name) {
   const auto sanitizedName = exec::sanitizeName(name);
   if (auto func = getTableFunctionEntry(sanitizedName)) {
     return func.value()->returnSpec;
-  } else {
-    VELOX_USER_FAIL("ReturnTypeSpecification not found for function: {}", name);
   }
+
+  VELOX_USER_FAIL("ReturnTypeSpecification not found for function: {}", name);
 }
 
 TableArgumentSpecList getTableFunctionArgumentSpecs(const std::string& name) {
   const auto sanitizedName = exec::sanitizeName(name);
   if (auto func = getTableFunctionEntry(sanitizedName)) {
     return func.value()->argumentsSpec;
-  } else {
-    VELOX_USER_FAIL("Arguments Specification not found for function: {}", name);
   }
+
+  VELOX_USER_FAIL("Arguments Specification not found for function: {}", name);
 }
 
 TableFunctionHandlePtr getTableFunctionHandle(
@@ -86,9 +86,9 @@ TableFunctionHandlePtr getTableFunctionHandle(
   const auto sanitizedName = exec::sanitizeName(name);
   if (auto func = getTableFunctionEntry(sanitizedName)) {
     return func.value()->handleFactory(serializedTableFunctionHandle);
-  } else {
-    VELOX_USER_FAIL("Table handle not found for function: {}", name);
   }
+
+  VELOX_USER_FAIL("Table handle not found for function: {}", name);
 }
 
 std::unique_ptr<TableFunctionAnalysis> TableFunction::analyze(

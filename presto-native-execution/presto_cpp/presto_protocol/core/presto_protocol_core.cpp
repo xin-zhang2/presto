@@ -7480,12 +7480,12 @@ void from_json(const json& j, NativeDescriptor& p) {
 } // namespace facebook::presto::protocol
 namespace facebook::presto::protocol {
 NativeTableFunctionHandle::NativeTableFunctionHandle() noexcept {
-  _type = "com.facebook.presto.tvf.NativeTableFunctionHandle";
+  _type = "system:com.facebook.presto.tvf.NativeTableFunctionHandle";
 }
 
 void to_json(json& j, const NativeTableFunctionHandle& p) {
   j = json::object();
-  j["@type"] = "com.facebook.presto.tvf.NativeTableFunctionHandle";
+  j["@type"] = "system:com.facebook.presto.tvf.NativeTableFunctionHandle";
   to_json_key(
       j,
       "serializedTableFunctionHandle",
@@ -10851,7 +10851,7 @@ void to_json(json& j, const std::shared_ptr<ConnectorTableFunctionHandle>& p) {
   }
   String type = p->_type;
 
-  if (type == "com.facebook.presto.tvf.NativeTableFunctionHandle") {
+  if (type == "system:com.facebook.presto.tvf.NativeTableFunctionHandle") {
     j = *std::static_pointer_cast<NativeTableFunctionHandle>(p);
     return;
   }
@@ -10871,7 +10871,7 @@ void from_json(
         " ConnectorTableFunctionHandle  ConnectorTableFunctionHandle");
   }
 
-  if (type == "com.facebook.presto.tvf.NativeTableFunctionHandle") {
+  if (type == "system:com.facebook.presto.tvf.NativeTableFunctionHandle") {
     std::shared_ptr<NativeTableFunctionHandle> k =
         std::make_shared<NativeTableFunctionHandle>();
     j.get_to(*k);
