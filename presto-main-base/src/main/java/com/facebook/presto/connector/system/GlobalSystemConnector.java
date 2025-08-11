@@ -30,6 +30,7 @@ import com.facebook.presto.spi.ConnectorTableLayoutHandle;
 import com.facebook.presto.spi.ConnectorTableLayoutResult;
 import com.facebook.presto.spi.ConnectorTableMetadata;
 import com.facebook.presto.spi.Constraint;
+import com.facebook.presto.spi.FixedSplitSource;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePrefix;
 import com.facebook.presto.spi.SplitContext;
@@ -164,7 +165,9 @@ public class GlobalSystemConnector
                     SequenceFunctionHandle sequenceFunctionHandle = (SequenceFunctionHandle) function;
                     return getSequenceFunctionSplitSource(sequenceFunctionHandle);
                 }
-                throw new UnsupportedOperationException();
+//                throw new UnsupportedOperationException();
+//                return new FixedSplitSource(ImmutableList.of());
+                return getSequenceFunctionSplitSource(new SequenceFunctionHandle(12, 20, 2));
             }
         };
     }

@@ -83,6 +83,9 @@ TableArgumentSpecList getTableFunctionArgumentSpecs(const std::string& name) {
 TableFunctionHandlePtr getTableFunctionHandle(
     const std::string& name,
     const std::string& serializedTableFunctionHandle) {
+
+  return ISerializable::deserialize<const TableFunctionHandle>(folly::parseJson(serializedTableFunctionHandle));
+
   const auto sanitizedName = exec::sanitizeName(name);
   if (auto func = getTableFunctionEntry(sanitizedName)) {
     return func.value()->handleFactory(serializedTableFunctionHandle);
