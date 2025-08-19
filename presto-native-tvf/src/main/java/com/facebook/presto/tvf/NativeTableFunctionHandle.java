@@ -13,15 +13,44 @@
  */
 package com.facebook.presto.tvf;
 
+import com.facebook.airlift.json.JsonCodec;
+import com.facebook.airlift.json.JsonCodecFactory;
 import com.facebook.presto.common.QualifiedObjectName;
+import com.facebook.presto.index.IndexHandleJacksonModule;
+import com.facebook.presto.metadata.ColumnHandleJacksonModule;
+import com.facebook.presto.metadata.DeleteTableHandleJacksonModule;
+import com.facebook.presto.metadata.FunctionAndTypeManager;
+import com.facebook.presto.metadata.FunctionHandleJacksonModule;
+import com.facebook.presto.metadata.HandleResolver;
+import com.facebook.presto.metadata.InsertTableHandleJacksonModule;
+import com.facebook.presto.metadata.OutputTableHandleJacksonModule;
+import com.facebook.presto.metadata.PartitioningHandleJacksonModule;
+import com.facebook.presto.metadata.SplitJacksonModule;
+import com.facebook.presto.metadata.TableFunctionJacksonHandleModule;
+import com.facebook.presto.metadata.TableHandleJacksonModule;
+import com.facebook.presto.metadata.TableLayoutHandleJacksonModule;
+import com.facebook.presto.metadata.TransactionHandleJacksonModule;
+import com.facebook.presto.spi.ConnectorSession;
+import com.facebook.presto.spi.ConnectorSplitSource;
+import com.facebook.presto.spi.FixedSplitSource;
+import com.facebook.presto.spi.NodeManager;
+import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 import com.facebook.presto.spi.function.TableFunctionHandleResolver;
 import com.facebook.presto.spi.function.table.ConnectorTableFunctionHandle;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 
+import static com.facebook.airlift.http.client.JsonBodyGenerator.jsonBodyGenerator;
+import static com.facebook.airlift.http.client.JsonResponseHandler.createJsonResponseHandler;
+import static com.facebook.airlift.http.client.Request.Builder.preparePost;
+import static com.facebook.presto.tvf.NativeTVFProvider.getWorkerLocation;
+import static com.google.common.net.HttpHeaders.ACCEPT;
+import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
+import static com.google.common.net.MediaType.JSON_UTF_8;
 import static java.util.Objects.requireNonNull;
 
 public class NativeTableFunctionHandle
@@ -61,5 +90,40 @@ public class NativeTableFunctionHandle
         {
             return ImmutableSet.of(NativeTableFunctionHandle.class);
         }
+    }
+
+    @Override
+    public ConnectorSplitSource getSplits(ConnectorTransactionHandle transaction, ConnectorSession session, NodeManager nodeManager, Object functionAndTypeManager)
+    {
+        if (functionAndTypeManager instanceof FunctionAndTypeManager) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            HandleResolver handleResolver = ((FunctionAndTypeManager) functionAndTypeManager).getHandleResolver();
+            objectMapper.registerModule(new TableHandleJacksonModule(handleResolver));
+            objectMapper.registerModule(new TableLayoutHandleJacksonModule(handleResolver));
+            objectMapper.registerModule(new ColumnHandleJacksonModule(handleResolver));
+            objectMapper.registerModule(new SplitJacksonModule(handleResolver));
+            objectMapper.registerModule(new OutputTableHandleJacksonModule(handleResolver));
+            objectMapper.registerModule(new InsertTableHandleJacksonModule(handleResolver));
+            objectMapper.registerModule(new DeleteTableHandleJacksonModule(handleResolver));
+            objectMapper.registerModule(new IndexHandleJacksonModule(handleResolver));
+            objectMapper.registerModule(new TransactionHandleJacksonModule(handleResolver));
+            objectMapper.registerModule(new PartitioningHandleJacksonModule(handleResolver));
+            objectMapper.registerModule(new FunctionHandleJacksonModule(handleResolver));
+            objectMapper.registerModule(new TableFunctionJacksonHandleModule(handleResolver));
+            JsonCodecFactory jsonCodecFactory = new JsonCodecFactory(() -> objectMapper);
+            JsonCodec<ConnectorTableFunctionHandle> nativeTableFunctionHandleCodec = jsonCodecFactory.jsonCodec(ConnectorTableFunctionHandle.class);
+
+            return new FixedSplitSource(
+                    HttpClientHolder.getHttpClient().execute(
+                            preparePost()
+                                    .setUri(getWorkerLocation(nodeManager, TVF_SPLITS_ENDPOINT))
+                                    .setBodyGenerator(jsonBodyGenerator(nativeTableFunctionHandleCodec, this))
+                                    .setHeader(CONTENT_TYPE, JSON_UTF_8.toString())
+                                    .setHeader(ACCEPT, JSON_UTF_8.toString())
+                                    .build(),
+                            createJsonResponseHandler(JsonCodec.listJsonCodec(NativeTableFunctionSplit.class))));
+        }
+
+        throw new UnsupportedOperationException();
     }
 }

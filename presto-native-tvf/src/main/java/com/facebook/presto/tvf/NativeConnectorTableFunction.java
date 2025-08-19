@@ -16,7 +16,12 @@ package com.facebook.presto.tvf;
 import com.facebook.airlift.http.client.HttpClient;
 import com.facebook.airlift.http.client.Request;
 import com.facebook.airlift.json.JsonCodec;
+import com.facebook.airlift.json.JsonCodecFactory;
+import com.facebook.airlift.json.JsonObjectMapperProvider;
+import com.facebook.presto.block.BlockJsonSerde.Serializer;
 import com.facebook.presto.common.QualifiedObjectName;
+import com.facebook.presto.common.block.Block;
+import com.facebook.presto.common.block.BlockEncodingManager;
 import com.facebook.presto.common.type.TypeManager;
 import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.NodeManager;
@@ -27,6 +32,9 @@ import com.facebook.presto.spi.function.table.Argument;
 import com.facebook.presto.spi.function.table.ArgumentSpecification;
 import com.facebook.presto.spi.function.table.ReturnTypeSpecification;
 import com.facebook.presto.spi.function.table.TableFunctionAnalysis;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
 import java.util.Map;
@@ -48,10 +56,21 @@ public class NativeConnectorTableFunction
     private final NodeManager nodeManager;
     private final TypeManager typeManager;
     private static final String TVF_ANALYZE_ENDPOINT = "/v1/tvf/analyze";
-    private static final JsonCodec<ConnectorTableMetadata> connectorTableMetadataJsonCodec = JsonCodec.jsonCodec(ConnectorTableMetadata.class);
+    private static final JsonCodec<ConnectorTableMetadata> connectorTableMetadataJsonCodec;
     private static final JsonCodec<NativeTableFunctionAnalysis> tableFunctionAnalysisJsonCodec =
             JsonCodec.jsonCodec(NativeTableFunctionAnalysis.class);
     private final QualifiedObjectName functionName;
+
+    static {
+        JsonObjectMapperProvider provider = new JsonObjectMapperProvider();
+        provider.setJsonSerializers(ImmutableMap.of(
+                Block.class, new Serializer(new BlockEncodingManager())));
+
+        ObjectMapper mapper = provider.get();
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        JsonCodecFactory codecFactory = new JsonCodecFactory(provider);
+        connectorTableMetadataJsonCodec = codecFactory.jsonCodec(ConnectorTableMetadata.class);
+    }
 
     public NativeConnectorTableFunction(
             @ForWorkerInfo HttpClient httpClient,

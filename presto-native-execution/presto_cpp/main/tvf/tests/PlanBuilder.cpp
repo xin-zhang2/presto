@@ -74,7 +74,8 @@ addTvfNode(
         // This can't be directly used like this. The TableFunction is planned
         // with a single join across all tables, so this doesn't translate the
         // same way.
-        analysis->requiredColumns(),
+        std::vector<column_index_t>{},
+        // analysis->requiredColumns(),
         sources);
   };
 }
