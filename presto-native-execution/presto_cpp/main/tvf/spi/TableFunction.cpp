@@ -47,8 +47,7 @@ bool registerTableFunction(
     TableFunctionAnalyzer analyzer,
     TableFunctionDataProcessorFactory dataProcessorfactory,
     TableFunctionSplitProcessorFactory splitProcessorfactory,
-    TableFunctionSplitGenerator splitGenerator,
-    TableFunctionHandleFactory handleFactory) {
+    TableFunctionSplitGenerator splitGenerator) {
   auto sanitizedName = exec::sanitizeName(name);
   tableFunctions().insert(
       {sanitizedName,
@@ -57,8 +56,7 @@ bool registerTableFunction(
         std::move(analyzer),
         std::move(dataProcessorfactory),
         std::move(splitProcessorfactory),
-        std::move(splitGenerator),
-       std::move(handleFactory)}});
+        std::move(splitGenerator)}});
   return true;
 }
 
@@ -66,29 +64,18 @@ ReturnSpecPtr getTableFunctionReturnType(const std::string& name) {
   const auto sanitizedName = exec::sanitizeName(name);
   if (auto func = getTableFunctionEntry(sanitizedName)) {
     return func.value()->returnSpec;
-  } else {
-    VELOX_USER_FAIL("ReturnTypeSpecification not found for function: {}", name);
   }
+
+  VELOX_USER_FAIL("ReturnTypeSpecification not found for function: {}", name);
 }
 
 TableArgumentSpecList getTableFunctionArgumentSpecs(const std::string& name) {
   const auto sanitizedName = exec::sanitizeName(name);
   if (auto func = getTableFunctionEntry(sanitizedName)) {
     return func.value()->argumentsSpec;
-  } else {
-    VELOX_USER_FAIL("Arguments Specification not found for function: {}", name);
   }
-}
 
-TableFunctionHandlePtr getTableFunctionHandle(
-    const std::string& name,
-    const std::string& serializedTableFunctionHandle) {
-  const auto sanitizedName = exec::sanitizeName(name);
-  if (auto func = getTableFunctionEntry(sanitizedName)) {
-    return func.value()->handleFactory(serializedTableFunctionHandle);
-  } else {
-    VELOX_USER_FAIL("Table handle not found for function: {}", name);
-  }
+  VELOX_USER_FAIL("Arguments Specification not found for function: {}", name);
 }
 
 std::unique_ptr<TableFunctionAnalysis> TableFunction::analyze(

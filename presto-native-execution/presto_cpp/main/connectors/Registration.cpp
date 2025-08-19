@@ -87,6 +87,10 @@ void registerConnectors() {
   registerPrestoToVeloxConnector(
       std::make_unique<SystemPrestoToVeloxConnector>("$system@system"));
 
+  registerPrestoToVeloxConnector(
+      std::make_unique<TvfNativePrestoToVeloxConnector>(
+          "system:com.facebook.presto.tvf.NativeTableFunctionSplit"));
+
 #ifdef PRESTO_ENABLE_ARROW_FLIGHT_CONNECTOR
   registerPrestoToVeloxConnector(std::make_unique<ArrowPrestoToVeloxConnector>(
       ArrowFlightConnectorFactory::kArrowFlightConnectorName));

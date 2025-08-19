@@ -24,7 +24,7 @@ class TableFunctionProcessorNode : public velox::core::PlanNode {
  public:
   TableFunctionProcessorNode(
       velox::core::PlanNodeId id,
-      std::string  name,
+      std::string name,
       TableFunctionHandlePtr handle,
       std::vector<velox::core::FieldAccessTypedExprPtr> partitionKeys,
       std::vector<velox::core::FieldAccessTypedExprPtr> sortingKeys,

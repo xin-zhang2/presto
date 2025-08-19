@@ -14,11 +14,14 @@
 package com.facebook.presto.tvf;
 
 import com.facebook.airlift.bootstrap.Bootstrap;
+import com.facebook.airlift.http.client.HttpClient;
 import com.facebook.presto.spi.function.TableFunctionHandleResolver;
+import com.facebook.presto.spi.function.TableFunctionSplitResolver;
 import com.facebook.presto.spi.tvf.TVFProvider;
 import com.facebook.presto.spi.tvf.TVFProviderContext;
 import com.facebook.presto.spi.tvf.TVFProviderFactory;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 
 import java.util.Map;
 
@@ -35,6 +38,8 @@ public class NativeTVFProviderFactory
 
     private static final NativeTableFunctionHandle.Resolver HANDLE_RESOLVER = new NativeTableFunctionHandle.Resolver();
 
+    private static final NativeTableFunctionSplit.Resolver SPLIT_RESOLVER = new NativeTableFunctionSplit.Resolver();
+
     @Override
     public String getName()
     {
@@ -45,6 +50,12 @@ public class NativeTVFProviderFactory
     public TableFunctionHandleResolver getTableFunctionHandleResolver()
     {
         return HANDLE_RESOLVER;
+    }
+
+    @Override
+    public TableFunctionSplitResolver getTableFunctionSplitResolver()
+    {
+        return SPLIT_RESOLVER;
     }
 
     @Override
@@ -59,6 +70,10 @@ public class NativeTVFProviderFactory
                     .doNotInitializeLogging()
                     .setRequiredConfigurationProperties(config)
                     .initialize();
+
+            Key<HttpClient> httpClientKey = Key.get(HttpClient.class, ForWorkerInfo.class);
+            HttpClientHolder.setHttpClient(injector.getInstance(httpClientKey));
+
             return injector.getInstance(NativeTVFProvider.class);
         }
         catch (Exception e) {

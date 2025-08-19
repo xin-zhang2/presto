@@ -168,11 +168,6 @@ void registerExcludeColumns(const std::string& name) {
             dynamic_cast<const ExcludeColumnsHandle*>(handle.get());
         return std::make_unique<ExcludeColumnsDataProcessor>(
             excludeHandle, pool);
-      },
-      TableFunction::defaultCreateSplitProcessor,
-      TableFunction::defaultGetSplits,
-      [](const std::string& serializedTableFunctionHandle) -> TableFunctionHandlePtr {
-        return ISerializable::deserialize<const ExcludeColumnsHandle>(folly::parseJson(serializedTableFunctionHandle));
       });
   ExcludeColumnsHandle::registerSerDe();
 }

@@ -174,8 +174,6 @@ using TableFunctionSplitGenerator =
     std::function<std::vector<TableSplitHandlePtr>(
         const TableFunctionHandlePtr& handle)>;
 
-using TableFunctionHandleFactory = std::function<TableFunctionHandlePtr(const std::string&)>;
-
 struct TableFunctionEntry {
   TableArgumentSpecList argumentsSpec;
   ReturnSpecPtr returnSpec;
@@ -183,7 +181,6 @@ struct TableFunctionEntry {
   TableFunctionDataProcessorFactory dataProcessorFactory;
   TableFunctionSplitProcessorFactory splitProcessorFactory;
   TableFunctionSplitGenerator splitGenerator;
-  TableFunctionHandleFactory handleFactory;
 };
 
 /// Register a Table function with the specified name.
@@ -199,14 +196,11 @@ bool registerTableFunction(
     TableFunctionSplitProcessorFactory splitProcessorFactory =
         TableFunction::defaultCreateSplitProcessor,
     TableFunctionSplitGenerator splitGenerator =
-        TableFunction::defaultGetSplits,
-        TableFunctionHandleFactory handleFactory = TableFunction::defaultHandle);
+        TableFunction::defaultGetSplits);
 
 ReturnSpecPtr getTableFunctionReturnType(const std::string& name);
 
 TableArgumentSpecList getTableFunctionArgumentSpecs(const std::string& name);
-
-TableFunctionHandlePtr getTableFunctionHandle(const std::string& name, const std::string& serializedTableFunctionHandle);
 
 using TableFunctionMap = std::unordered_map<std::string, TableFunctionEntry>;
 

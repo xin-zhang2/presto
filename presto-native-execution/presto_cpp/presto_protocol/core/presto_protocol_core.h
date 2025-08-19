@@ -1885,6 +1885,15 @@ void to_json(json& j, const NativeTableFunctionAnalysis& p);
 void from_json(const json& j, NativeTableFunctionAnalysis& p);
 } // namespace facebook::presto::protocol
 namespace facebook::presto::protocol {
+struct NativeTableFunctionSplit : public ConnectorSplit {
+  String serializedTableFunctionSplitHandle = {};
+
+  NativeTableFunctionSplit() noexcept;
+};
+void to_json(json& j, const NativeTableFunctionSplit& p);
+void from_json(const json& j, NativeTableFunctionSplit& p);
+} // namespace facebook::presto::protocol
+namespace facebook::presto::protocol {
 struct NodeVersion {
   String version = {};
 };

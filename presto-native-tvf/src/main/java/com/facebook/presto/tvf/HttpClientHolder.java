@@ -11,20 +11,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.presto.spi.tvf;
+package com.facebook.presto.tvf;
 
-import com.facebook.presto.spi.function.TableFunctionHandleResolver;
-import com.facebook.presto.spi.function.TableFunctionSplitResolver;
+import com.facebook.airlift.http.client.HttpClient;
 
-import java.util.Map;
-
-public interface TVFProviderFactory
+public class HttpClientHolder
 {
-    TVFProvider createTVFProvider(Map<String, String> config, TVFProviderContext context);
+    private static HttpClient httpClient;
 
-    TableFunctionHandleResolver getTableFunctionHandleResolver();
+    private HttpClientHolder() {}
 
-    TableFunctionSplitResolver getTableFunctionSplitResolver();
+    public static void setHttpClient(@ForWorkerInfo HttpClient httpClient)
+    {
+        HttpClientHolder.httpClient = httpClient;
+    }
 
-    String getName();
+    public static HttpClient getHttpClient()
+    {
+        return httpClient;
+    }
 }

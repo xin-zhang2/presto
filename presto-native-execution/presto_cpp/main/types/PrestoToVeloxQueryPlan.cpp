@@ -1783,6 +1783,15 @@ VeloxQueryPlanConverterBase::toVeloxQueryPlan(
     const std::shared_ptr<const protocol::TableFunctionProcessorNode>& node,
     const std::shared_ptr<protocol::TableWriteInfo>& tableWriteInfo,
     const protocol::TaskId& taskId) {
+  auto handle = std::dynamic_pointer_cast<protocol::NativeTableFunctionHandle>(
+      node->handle.functionHandle);
+  VELOX_CHECK_NOT_NULL(handle, "Invalid table function handle {}", toJsonString(node->handle));
+
+  auto functionName = handle->functionName; // fully qualified function name
+  auto tableFunctionHandlePtr =
+      ISerializable::deserialize<const tvf::TableFunctionHandle>(
+          folly::parseJson(handle->serializedTableFunctionHandle));
+
   const auto outputType = toRowType(node->properOutputs, typeParser_);
 
   std::vector<column_index_t> requiredColumns;
@@ -1799,17 +1808,9 @@ VeloxQueryPlanConverterBase::toVeloxQueryPlan(
     }
   }
 
-  tvf::TableFunctionHandlePtr tableFunctionHandlePtr = nullptr;
-  if (auto handle =
-          std::dynamic_pointer_cast<protocol::NativeTableFunctionHandle>(
-              node->handle.functionHandle)) {
-    tableFunctionHandlePtr = tvf::getTableFunctionHandle(handle->functionName, handle->serializedTableFunctionHandle);
-  }
-
   std::vector<core::FieldAccessTypedExprPtr> partitionKeys;
   std::vector<core::FieldAccessTypedExprPtr> sortingKeys;
   std::vector<core::SortOrder> sortingOrders;
-
   if (node->specification) {
     if (!node->specification->partitionBy.empty()) {
       partitionKeys = toVeloxExprs(node->specification->partitionBy);
@@ -1824,14 +1825,14 @@ VeloxQueryPlanConverterBase::toVeloxQueryPlan(
 
   return std::make_shared<tvf::TableFunctionProcessorNode>(
     node->id,
-    node->name,
+    std::move(functionName),
     tableFunctionHandlePtr,
-    partitionKeys,
-    sortingKeys,
-    sortingOrders,
+    std::move(partitionKeys),
+    std::move(sortingKeys),
+    std::move(sortingOrders),
     outputType,
-    requiredColumns,
-    sources);
+    std::move(requiredColumns),
+    std::move(sources));
 }
 
 core::PlanNodePtr VeloxQueryPlanConverterBase::toVeloxQueryPlan(

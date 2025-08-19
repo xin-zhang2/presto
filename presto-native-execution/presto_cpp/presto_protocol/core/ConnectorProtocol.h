@@ -408,4 +408,16 @@ using SystemConnectorProtocol = ConnectorProtocolTemplate<
     NotImplemented,
     NotImplemented>;
 
+using TvfNativeConnectorProtocol = ConnectorProtocolTemplate<
+    SystemTableHandle,
+    SystemTableLayoutHandle,
+    SystemColumnHandle,
+    NotImplemented,
+    NotImplemented,
+    NativeTableFunctionSplit,
+    SystemPartitioningHandle,
+    SystemTransactionHandle,
+    NotImplemented,
+    NotImplemented>;
+
 } // namespace facebook::presto::protocol

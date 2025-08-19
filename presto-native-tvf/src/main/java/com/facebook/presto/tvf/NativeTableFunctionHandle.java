@@ -27,6 +27,8 @@ import static java.util.Objects.requireNonNull;
 public class NativeTableFunctionHandle
         implements ConnectorTableFunctionHandle
 {
+    private static final String TVF_SPLITS_ENDPOINT = "/v1/tvf/splits";
+
     private final QualifiedObjectName functionName;
     private final String serializedTableFunctionHandle;
 
