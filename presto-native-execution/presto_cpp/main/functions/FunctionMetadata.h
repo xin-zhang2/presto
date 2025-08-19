@@ -29,4 +29,8 @@ nlohmann::json getAnalyzedTableValueFunction(
     std::string connectorTableMetadataJson,
     velox::memory::MemoryPool* pool);
 
+nlohmann::json getSplits(
+    const std::string& connectorTableFunctionHandle,
+    velox::memory::MemoryPool* pool);
+
 } // namespace facebook::presto

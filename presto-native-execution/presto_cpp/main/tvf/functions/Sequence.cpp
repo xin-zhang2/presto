@@ -253,10 +253,7 @@ void registerSequence(const std::string& name) {
         auto sequenceHandle = dynamic_cast<const SequenceHandle*>(handle.get());
         return std::make_unique<Sequence>(pool, sequenceHandle);
       },
-      Sequence::getSplits,
-      [](const std::string& serializedTableFunctionHandle) -> TableFunctionHandlePtr {
-        return ISerializable::deserialize<const SequenceHandle>(folly::parseJson(serializedTableFunctionHandle));
-      });
+      Sequence::getSplits);
   SequenceHandle::registerSerDe();
   SequenceSplitHandle::registerSerDe();
 }
