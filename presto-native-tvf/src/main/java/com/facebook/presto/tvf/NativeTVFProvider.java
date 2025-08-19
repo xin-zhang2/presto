@@ -17,14 +17,22 @@ import com.facebook.airlift.http.client.HttpClient;
 import com.facebook.airlift.http.client.HttpUriBuilder;
 import com.facebook.airlift.http.client.Request;
 import com.facebook.airlift.json.JsonCodec;
+import com.facebook.airlift.json.JsonCodecFactory;
+import com.facebook.airlift.json.JsonObjectMapperProvider;
+import com.facebook.presto.common.type.Type;
 import com.facebook.presto.common.type.TypeManager;
 import com.facebook.presto.spi.Node;
 import com.facebook.presto.spi.NodeManager;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.function.table.ConnectorTableFunction;
 import com.facebook.presto.spi.tvf.TVFProvider;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 
 import javax.inject.Inject;
@@ -39,6 +47,7 @@ import java.util.function.Supplier;
 
 import static com.facebook.airlift.http.client.JsonResponseHandler.createJsonResponseHandler;
 import static com.facebook.airlift.http.client.Request.Builder.prepareGet;
+import static com.facebook.presto.common.type.TypeSignature.parseTypeSignature;
 import static com.facebook.presto.spi.StandardErrorCode.INVALID_ARGUMENTS;
 import static java.util.Objects.requireNonNull;
 
@@ -49,8 +58,7 @@ public class NativeTVFProvider
     private final TypeManager typeManager;
     private final HttpClient httpClient;
     private static final String TABLE_FUNCTIONS_ENDPOINT = "/v1/functions/tvf";
-    private static final JsonCodec<Map<String, JsonBasedTableFunctionMetadata>> connectorTableFunctionListJsonCodec =
-            JsonCodec.mapJsonCodec(String.class, JsonBasedTableFunctionMetadata.class);
+    private final JsonCodec<Map<String, JsonBasedTableFunctionMetadata>> connectorTableFunctionListJsonCodec;
     private final Supplier<List<ConnectorTableFunction>> memoizedTableFunctionsSupplier;
 
     @Inject
@@ -64,6 +72,16 @@ public class NativeTVFProvider
         this.httpClient = requireNonNull(httpClient, "httpClient is null");
         this.memoizedTableFunctionsSupplier = Suppliers.memoizeWithExpiration(this::loadConnectorTableFunctions,
                 100000, TimeUnit.MILLISECONDS);
+
+        JsonObjectMapperProvider provider = new JsonObjectMapperProvider();
+
+        provider.setJsonDeserializers(ImmutableMap.of(
+                Type.class, new TypeDeserializer(typeManager)));
+
+        ObjectMapper mapper = provider.get();
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        JsonCodecFactory codecFactory = new JsonCodecFactory(provider);
+        this.connectorTableFunctionListJsonCodec = codecFactory.mapJsonCodec(String.class, JsonBasedTableFunctionMetadata.class);
     }
 
     @Override
@@ -107,5 +125,24 @@ public class NativeTVFProvider
                 connectorTableFunction.getQualifiedObjectName(),
                 connectorTableFunction.getArguments(),
                 connectorTableFunction.getReturnTypeSpecification());
+    }
+
+    public static final class TypeDeserializer
+            extends FromStringDeserializer<Type>
+    {
+        private final TypeManager typeManager;
+
+        @Inject
+        public TypeDeserializer(TypeManager typeManager)
+        {
+            super(Type.class);
+            this.typeManager = requireNonNull(typeManager, "typeManager is null");
+        }
+
+        @Override
+        protected Type _deserialize(String value, DeserializationContext context)
+        {
+            return typeManager.getType(parseTypeSignature(value));
+        }
     }
 }
