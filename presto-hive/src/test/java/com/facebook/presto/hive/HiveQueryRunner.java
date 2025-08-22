@@ -36,7 +36,6 @@ import com.facebook.presto.tests.DistributedQueryRunner;
 import com.facebook.presto.tests.tpcds.TpcdsTableName;
 import com.facebook.presto.tpcds.TpcdsPlugin;
 import com.facebook.presto.tpch.TpchPlugin;
-import com.facebook.presto.tvf.TvfPlugin;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -244,9 +243,9 @@ public final class HiveQueryRunner
             metastore = externalMetastore.orElseGet(() -> getFileHiveMetastore(queryRunner));
 
             queryRunner.installPlugin(new HivePlugin(HIVE_CATALOG, Optional.of(metastore)));
-
-            queryRunner.installCoordinatorPlugin(new TvfPlugin());
-            queryRunner.loadTVFProvider("system");
+//
+//            queryRunner.installCoordinatorPlugin(new TvfPlugin());
+//            queryRunner.loadTVFProvider("system");
 
             if (addJmxPlugin) {
                 queryRunner.installPlugin(new JmxPlugin());
