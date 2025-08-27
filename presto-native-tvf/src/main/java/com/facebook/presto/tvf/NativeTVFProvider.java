@@ -27,8 +27,6 @@ import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.function.table.ConnectorTableFunction;
 import com.facebook.presto.spi.tvf.TVFProvider;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
@@ -74,12 +72,9 @@ public class NativeTVFProvider
                 100000, TimeUnit.MILLISECONDS);
 
         JsonObjectMapperProvider provider = new JsonObjectMapperProvider();
-
         provider.setJsonDeserializers(ImmutableMap.of(
                 Type.class, new TypeDeserializer(typeManager)));
 
-        ObjectMapper mapper = provider.get();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         JsonCodecFactory codecFactory = new JsonCodecFactory(provider);
         this.connectorTableFunctionListJsonCodec = codecFactory.mapJsonCodec(String.class, JsonBasedTableFunctionMetadata.class);
     }
@@ -127,7 +122,7 @@ public class NativeTVFProvider
                 connectorTableFunction.getReturnTypeSpecification());
     }
 
-    public static final class TypeDeserializer
+    private static final class TypeDeserializer
             extends FromStringDeserializer<Type>
     {
         private final TypeManager typeManager;
