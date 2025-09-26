@@ -15,7 +15,7 @@ target_link_libraries(presto_tvf_plan_builder presto_tvf_core
                       presto_tvf_functions presto_tvf_spi velox_core)
 
 add_executable(presto_tvf_test ExcludeColumnsTest.cpp PlanNodeSerdeTest.cpp
-                               SequenceTest.cpp)
+                               SequenceTest.cpp TestingTableFunctions.cpp TableFunctionInvocationTest.cpp)
 
 add_test(presto_tvf_test presto_tvf_test)
 

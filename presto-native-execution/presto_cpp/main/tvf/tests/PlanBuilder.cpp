@@ -22,8 +22,11 @@ std::function<
     velox::core::PlanNodePtr(std::string nodeId, velox::core::PlanNodePtr)>
 addTvfNode(
     const std::string& name,
-    const std::unordered_map<std::string, std::shared_ptr<Argument>>& args) {
-  return [&name, &args](PlanNodeId nodeId, PlanNodePtr source) -> PlanNodePtr {
+    const std::unordered_map<std::string, std::shared_ptr<Argument>>& args,
+    const std::vector<velox::core::FieldAccessTypedExprPtr>& partitionKeys,
+    const std::vector<velox::core::FieldAccessTypedExprPtr>& sortingKeys,
+    const std::vector<velox::core::SortOrder>& sortingOrders ) {
+  return [&name, &args, &partitionKeys, &sortingKeys, &sortingOrders](PlanNodeId nodeId, PlanNodePtr source) -> PlanNodePtr {
     // Validate the user has provided all required arguments.
     auto argsList = getTableFunctionArgumentSpecs(name);
     for (const auto arg : argsList) {
@@ -60,9 +63,6 @@ addTvfNode(
       sources.push_back(source);
     }
 
-    std::vector<velox::core::FieldAccessTypedExprPtr> partitionKeys = {};
-    std::vector<velox::core::FieldAccessTypedExprPtr> sortingKeys = {};
-    std::vector<velox::core::SortOrder> sortingOrders = {};
     return std::make_shared<TableFunctionProcessorNode>(
         nodeId,
         name,
@@ -74,8 +74,8 @@ addTvfNode(
         // This can't be directly used like this. The TableFunction is planned
         // with a single join across all tables, so this doesn't translate the
         // same way.
-        std::vector<column_index_t>{},
-        // analysis->requiredColumns(),
+        // std::vector<column_index_t>{},
+        analysis->requiredColumns().at("INPUT"),
         sources);
   };
 }
