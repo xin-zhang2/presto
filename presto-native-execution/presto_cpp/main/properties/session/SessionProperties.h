@@ -414,6 +414,8 @@ class SessionProperties : public SessionPropertiesProvider {
   static constexpr const char* kAggregationMemoryCompactionReclaimEnabled =
       "native_aggregation_memory_compaction_reclaim_enabled";
 
+  static constexpr const char* kExchangeChecksum = "native_exchange_checksum";
+
   static SessionProperties* instance();
 
   SessionProperties();

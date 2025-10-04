@@ -104,6 +104,7 @@ public class NativeWorkerSessionPropertyProvider
     public static final String NATIVE_RPC_RATELIMITER_DECREASE_FACTOR = "native_rpc_ratelimiter_decrease_factor";
     public static final String NATIVE_RPC_RATELIMITER_MAX_LIMIT = "native_rpc_ratelimiter_max_limit";
     public static final String NATIVE_RPC_CONGESTION_MAX_WINDOW = "native_rpc_congestion_max_window";
+    public static final String NATIVE_EXCHANGE_CHECKSUM = "native_exchange_checksum";
 
     private final List<PropertyMetadata<?>> sessionProperties;
 
@@ -551,6 +552,11 @@ public class NativeWorkerSessionPropertyProvider
                         "Native Execution only. Ceiling for the per-driver RPC congestion window " +
                                 "(0 = per-mode default: PER_ROW 100, BATCH 256).",
                         0L,
+                        !nativeExecution),
+                booleanProperty(
+                        NATIVE_EXCHANGE_CHECKSUM,
+                        "Enable exchange checksum",
+                        featuresConfig.isExchangeChecksumEnabled(),
                         !nativeExecution));
     }
 
