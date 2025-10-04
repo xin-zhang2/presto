@@ -99,6 +99,7 @@ public class NativeWorkerSessionPropertyProvider
     public static final String NATIVE_AGGREGATION_COMPACTION_UNUSED_MEMORY_RATIO = "native_aggregation_compaction_unused_memory_ratio";
     public static final String NATIVE_AGGREGATION_MEMORY_COMPACTION_RECLAIM_ENABLED = "native_aggregation_memory_compaction_reclaim_enabled";
     public static final String NATIVE_MERGE_JOIN_OUTPUT_BATCH_START_SIZE = "native_merge_join_output_batch_start_size";
+    public static final String NATIVE_EXCHANGE_CHECKSUM = "native_exchange_checksum";
 
     private final List<PropertyMetadata<?>> sessionProperties;
 
@@ -511,6 +512,11 @@ public class NativeWorkerSessionPropertyProvider
                                 "the average row size of previous output batches. When zero (default), " +
                                 "dynamic adjustment is disabled and the batch size is fixed at preferred_output_batch_rows.",
                         0,
+                        !nativeExecution),
+                booleanProperty(
+                        NATIVE_EXCHANGE_CHECKSUM,
+                        "Enable exchange checksum",
+                        featuresConfig.isExchangeChecksumEnabled(),
                         !nativeExecution));
     }
 

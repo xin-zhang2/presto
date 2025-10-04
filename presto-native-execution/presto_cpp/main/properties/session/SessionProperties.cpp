@@ -680,6 +680,14 @@ SessionProperties::SessionProperties() {
       QueryConfig::kAggregationMemoryCompactionReclaimEnabled,
       util::boolToLowerCaseString(
           c.aggregationMemoryCompactionReclaimEnabled()));
+
+  addSessionProperty(
+      kExchangeChecksum,
+      "kExchangeChecksum",
+      BOOLEAN(),
+      false,
+      QueryConfig::kExchangeChecksum,
+      util::boolToLowerCaseString(c.isExchangeChecksumEnabled()));
 }
 
 bool SessionProperties::useVeloxGeospatialJoin() const {

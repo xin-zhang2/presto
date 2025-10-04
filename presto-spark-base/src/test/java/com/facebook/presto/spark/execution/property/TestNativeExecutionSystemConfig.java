@@ -81,6 +81,7 @@ public class TestNativeExecutionSystemConfig
                 .put("max-spill-bytes", String.valueOf(600L << 30))
                 .put("plan-consistency-check-enabled", "true")
                 .put("exchange.materialization.enabled", "false")
+                .put("exchange.checksum-enabled", "false")
                 .build();
         assertEquals(nativeExecutionSystemConfig.getAllProperties(), expectedConfigs);
 
@@ -174,6 +175,7 @@ public class TestNativeExecutionSystemConfig
                 .put("order-by-spill-enabled", "false")
                 .put("plan-consistency-check-enabled", "false")
                 .put("exchange.materialization.enabled", "true")
+                .put("exchange.checksum-enabled", "false")
                 .put("non-defined-property-key-0", "non-defined-property-value-0")
                 .put("non-defined-property-key-1", "non-defined-property-value-1")
                 .put("non-defined-property-key-2", "non-defined-property-value-2")
