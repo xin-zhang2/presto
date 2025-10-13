@@ -16,6 +16,7 @@ package com.facebook.presto.common.type;
 import com.facebook.presto.common.block.Block;
 import com.facebook.presto.common.block.BlockBuilder;
 import com.facebook.presto.common.block.BlockBuilderStatus;
+import com.facebook.presto.common.block.IntArrayBlock;
 import com.facebook.presto.common.block.LongArrayBlockBuilder;
 import com.facebook.presto.common.block.PageBuilderStatus;
 import com.facebook.presto.common.block.UncheckedBlock;
@@ -53,7 +54,7 @@ public abstract class AbstractLongType
     @Override
     public final long getLong(Block block, int position)
     {
-        return block.getLong(position);
+        return getLongValue(block, position);
     }
 
     @Override
@@ -81,29 +82,29 @@ public abstract class AbstractLongType
             blockBuilder.appendNull();
         }
         else {
-            blockBuilder.writeLong(block.getLong(position)).closeEntry();
+            blockBuilder.writeLong(getLongValue(block, position)).closeEntry();
         }
     }
 
     @Override
     public boolean equalTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition)
     {
-        long leftValue = leftBlock.getLong(leftPosition);
-        long rightValue = rightBlock.getLong(rightPosition);
+        long leftValue = getLongValue(leftBlock, leftPosition);
+        long rightValue = getLongValue(rightBlock, rightPosition);
         return leftValue == rightValue;
     }
 
     @Override
     public long hash(Block block, int position)
     {
-        return hash(block.getLong(position));
+        return hash(getLong(block, position));
     }
 
     @Override
     public int compareTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition)
     {
-        long leftValue = leftBlock.getLong(leftPosition);
-        long rightValue = rightBlock.getLong(rightPosition);
+        long leftValue = getLongValue(leftBlock, leftPosition);
+        long rightValue = getLongValue(rightBlock, rightPosition);
         return Long.compare(leftValue, rightValue);
     }
 
@@ -138,5 +139,13 @@ public abstract class AbstractLongType
     {
         // xxhash64 mix
         return rotateLeft(value * 0xC2B2AE3D27D4EB4FL, 31) * 0x9E3779B185EBCA87L;
+    }
+
+    private long getLongValue(Block block, int position)
+    {
+        if (block instanceof IntArrayBlock) {
+            return block.getInt(position);
+        }
+        return block.getLong(position);
     }
 }

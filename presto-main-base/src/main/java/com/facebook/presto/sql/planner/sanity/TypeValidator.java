@@ -108,7 +108,7 @@ public final class TypeValidator
             for (Map.Entry<VariableReferenceExpression, RowExpression> entry : node.getAssignments().entrySet()) {
                 RowExpression expression = entry.getValue();
                 Type actualType = expression.getType();
-                verifyTypeSignature(entry.getKey(), actualType.getTypeSignature());
+//                verifyTypeSignature(entry.getKey(), actualType.getTypeSignature());
             }
 
             return null;

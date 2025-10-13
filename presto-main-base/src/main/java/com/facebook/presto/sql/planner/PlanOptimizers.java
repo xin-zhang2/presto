@@ -181,6 +181,7 @@ import com.facebook.presto.sql.planner.optimizations.PrefilterForLimitingAggrega
 import com.facebook.presto.sql.planner.optimizations.PruneUnreferencedOutputs;
 import com.facebook.presto.sql.planner.optimizations.PushdownSubfields;
 import com.facebook.presto.sql.planner.optimizations.RandomizeNullKeyInOuterJoin;
+import com.facebook.presto.sql.planner.optimizations.RemoveIntToBigIntCast;
 import com.facebook.presto.sql.planner.optimizations.RemoveRedundantDistinctAggregation;
 import com.facebook.presto.sql.planner.optimizations.ReplaceConstantVariableReferencesWithConstants;
 import com.facebook.presto.sql.planner.optimizations.ReplicateSemiJoinInDelete;
@@ -863,7 +864,7 @@ public class PlanOptimizers
                         statsCalculator,
                         costCalculator,
                         ImmutableSet.of(new RewriteTableFunctionToTableScan(metadata))));
-
+        builder.add(new RemoveIntToBigIntCast());
         if (!noExchange) {
             builder.add(new ReplicateSemiJoinInDelete()); // Must run before AddExchanges
 
@@ -989,6 +990,7 @@ public class PlanOptimizers
                         costCalculator,
                         ImmutableSet.of(new RemoveRedundantIdentityProjections(), new PruneRedundantProjectionAssignments())));
 
+//        builder.add(new RemoveIntToBigIntCast());
         // Pass after connector optimizer, as it relies on connector optimizer to identify empty input tables and convert them to empty ValuesNode
         builder.add(new SimplifyPlanWithEmptyInput());
 
