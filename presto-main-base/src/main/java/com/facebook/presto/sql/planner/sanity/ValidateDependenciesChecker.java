@@ -286,7 +286,7 @@ public final class ValidateDependenciesChecker
             Set<VariableReferenceExpression> inputs = createInputs(source, boundVariables);
             for (RowExpression expression : node.getAssignments().getExpressions()) {
                 Set<VariableReferenceExpression> dependencies = VariablesExtractor.extractUnique(expression);
-//                checkDependencies(inputs, dependencies, "Invalid node. Expression dependencies (%s) not in source plan output (%s)", dependencies, inputs);
+                checkDependencies(inputs, dependencies, "Invalid node. Expression dependencies (%s) not in source plan output (%s)", dependencies, inputs);
             }
 
             return null;

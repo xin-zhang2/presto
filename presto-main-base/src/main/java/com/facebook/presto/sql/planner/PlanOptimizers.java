@@ -864,7 +864,7 @@ public class PlanOptimizers
                         statsCalculator,
                         costCalculator,
                         ImmutableSet.of(new RewriteTableFunctionToTableScan(metadata))));
-        builder.add(new RemoveIntToBigIntCast());
+
         if (!noExchange) {
             builder.add(new ReplicateSemiJoinInDelete()); // Must run before AddExchanges
 
@@ -990,7 +990,7 @@ public class PlanOptimizers
                         costCalculator,
                         ImmutableSet.of(new RemoveRedundantIdentityProjections(), new PruneRedundantProjectionAssignments())));
 
-//        builder.add(new RemoveIntToBigIntCast());
+        builder.add(new RemoveIntToBigIntCast());
         // Pass after connector optimizer, as it relies on connector optimizer to identify empty input tables and convert them to empty ValuesNode
         builder.add(new SimplifyPlanWithEmptyInput());
 
