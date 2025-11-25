@@ -88,6 +88,7 @@ public class NativeWorkerSessionPropertyProvider
     public static final String NATIVE_INDEX_LOOKUP_JOIN_SPLIT_OUTPUT = "native_index_lookup_join_split_output";
     public static final String NATIVE_UNNEST_SPLIT_OUTPUT = "native_unnest_split_output";
     public static final String NATIVE_USE_VELOX_GEOSPATIAL_JOIN = "native_use_velox_geospatial_join";
+    public static final String NATIVE_HASHTABLE_PAGE_SIZE = "native_hashtable_page_size";
 
     private final List<PropertyMetadata<?>> sessionProperties;
 
@@ -432,6 +433,12 @@ public class NativeWorkerSessionPropertyProvider
                                 "velox::core::SpatialJoinNode. Otherwise, it is converted to a " +
                                 "velox::core::NestedLoopJoinNode.",
                         true,
+                        !nativeExecution),
+                stringProperty(
+                        NATIVE_HASHTABLE_PAGE_SIZE,
+                        "The memory allocation unit size for HashTable operations." +
+                                "The value must be 2^n bytes between 4KB and 2MB.",
+                        "4KB",
                         !nativeExecution));
     }
 

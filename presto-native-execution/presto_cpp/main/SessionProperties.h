@@ -378,6 +378,13 @@ class SessionProperties {
   static constexpr const char* kUseVeloxGeospatialJoin =
       "native_use_velox_geospatial_join";
 
+  /// The memory allocation unit size for HashTable operations.
+  /// It controls the page size used when allocating memory for hash table rows.
+  /// The value must be 2^n bytes between 4KB and 2MB.
+  /// This is an experimental property for performance tuning.
+  static constexpr const char* kHashTablePageSize =
+      "native_hashtable_page_size";
+
   inline bool hasVeloxConfig(const std::string& key) {
     auto sessionProperty = sessionProperties_.find(key);
     if (sessionProperty == sessionProperties_.end()) {

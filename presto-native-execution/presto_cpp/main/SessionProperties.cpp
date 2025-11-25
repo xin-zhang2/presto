@@ -586,6 +586,14 @@ SessionProperties::SessionProperties() {
       false,
       std::nullopt,
       "true");
+
+  addSessionProperty(
+      kHashTablePageSize,
+      "Page size used for hash table",
+      BIGINT(),
+      false,
+      QueryConfig::kHashTablePageSize,
+      std::to_string(c.hashTablePageSize()));
 }
 
 const std::string SessionProperties::toVeloxConfig(
