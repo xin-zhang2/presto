@@ -594,6 +594,30 @@ SessionProperties::SessionProperties() {
       false,
       QueryConfig::kHashTablePageSize,
       std::to_string(c.hashTablePageSize()));
+
+  addSessionProperty(
+      kHashTableMinPages,
+      "The minimum page num for HashTable non-contiguous memory allocation.",
+      INTEGER(),
+      false,
+      QueryConfig::kHashTableMinPages,
+      std::to_string(c.hashTableMinPages()));
+
+  addSessionProperty(
+      kHashTableHugePageThreshold,
+      "The threshold for HashTable huge page memory allocation.",
+      BIGINT(),
+      false,
+      QueryConfig::kHashTableHugePageThreshold,
+      std::to_string(c.hashTableHugePageThreshold()));
+
+  addSessionProperty(
+      kHashTableHugePageNums,
+      "The page num for HashTable huge page memory allocation.",
+      INTEGER(),
+      false,
+      QueryConfig::kHashTableHugePageNums,
+      std::to_string(c.hashTableHugePageNums()));
 }
 
 const std::string SessionProperties::toVeloxConfig(

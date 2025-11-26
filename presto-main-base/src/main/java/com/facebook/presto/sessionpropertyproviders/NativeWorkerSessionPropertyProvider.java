@@ -13,6 +13,7 @@
  */
 package com.facebook.presto.sessionpropertyproviders;
 
+import com.facebook.airlift.units.DataSize;
 import com.facebook.presto.spi.session.PropertyMetadata;
 import com.facebook.presto.spi.session.WorkerSessionPropertyProvider;
 import com.facebook.presto.sql.analyzer.FeaturesConfig;
@@ -22,6 +23,7 @@ import com.google.inject.Inject;
 import java.util.List;
 
 import static com.facebook.presto.spi.session.PropertyMetadata.booleanProperty;
+import static com.facebook.presto.spi.session.PropertyMetadata.dataSizeProperty;
 import static com.facebook.presto.spi.session.PropertyMetadata.doubleProperty;
 import static com.facebook.presto.spi.session.PropertyMetadata.integerProperty;
 import static com.facebook.presto.spi.session.PropertyMetadata.longProperty;
@@ -89,6 +91,9 @@ public class NativeWorkerSessionPropertyProvider
     public static final String NATIVE_UNNEST_SPLIT_OUTPUT = "native_unnest_split_output";
     public static final String NATIVE_USE_VELOX_GEOSPATIAL_JOIN = "native_use_velox_geospatial_join";
     public static final String NATIVE_HASHTABLE_PAGE_SIZE = "native_hashtable_page_size";
+    public static final String NATIVE_HASHTABLE_MIN_PAGES = "native_hashtable_min_pages";
+    public static final String NATIVE_HASHTABLE_HUGE_PAGE_THRESHOLD = "native_hashtable_huge_page_threshold";
+    public static final String NATIVE_HASHTABLE_HUGE_PAGE_NUMS = "native_hashtable_huge_page_nums";
 
     private final List<PropertyMetadata<?>> sessionProperties;
 
@@ -434,11 +439,26 @@ public class NativeWorkerSessionPropertyProvider
                                 "velox::core::NestedLoopJoinNode.",
                         true,
                         !nativeExecution),
-                stringProperty(
+                dataSizeProperty(
                         NATIVE_HASHTABLE_PAGE_SIZE,
                         "The memory allocation unit size for HashTable operations." +
                                 "The value must be 2^n bytes between 4KB and 2MB.",
-                        "4KB",
+                        DataSize.valueOf("4kB"),
+                        !nativeExecution),
+                integerProperty(
+                        NATIVE_HASHTABLE_MIN_PAGES,
+                        "The minimum page num for HashTable non-contiguous memory allocation.",
+                        16,
+                        !nativeExecution),
+                dataSizeProperty(
+                        NATIVE_HASHTABLE_HUGE_PAGE_THRESHOLD,
+                        "The threshold for HashTable huge page memory allocation.",
+                        DataSize.valueOf("256kB"),
+                        !nativeExecution),
+                integerProperty(
+                        NATIVE_HASHTABLE_HUGE_PAGE_NUMS,
+                        "The page num for HashTable huge page memory allocation.",
+                        16,
                         !nativeExecution));
     }
 
