@@ -439,21 +439,21 @@ public class NativeWorkerSessionPropertyProvider
                                 "velox::core::NestedLoopJoinNode.",
                         true,
                         !nativeExecution),
-                dataSizeProperty(
+                longProperty(
                         NATIVE_HASHTABLE_PAGE_SIZE,
                         "The memory allocation unit size for HashTable operations." +
                                 "The value must be 2^n bytes between 4KB and 2MB.",
-                        DataSize.valueOf("4kB"),
+                        4096L,
                         !nativeExecution),
                 integerProperty(
                         NATIVE_HASHTABLE_MIN_PAGES,
                         "The minimum page num for HashTable non-contiguous memory allocation.",
                         16,
                         !nativeExecution),
-                dataSizeProperty(
+                longProperty(
                         NATIVE_HASHTABLE_HUGE_PAGE_THRESHOLD,
                         "The threshold for HashTable huge page memory allocation.",
-                        DataSize.valueOf("256kB"),
+                        256L << 10,
                         !nativeExecution),
                 integerProperty(
                         NATIVE_HASHTABLE_HUGE_PAGE_NUMS,
