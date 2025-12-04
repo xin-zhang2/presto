@@ -394,6 +394,9 @@ class SessionProperties {
   static constexpr const char* kHashTableHugePageNums =
       "native_hashtable_huge_page_nums";
 
+  static constexpr const char* kHashTableEnableHugePage =
+      "native_hashtable_enable_huge_page";
+
   inline bool hasVeloxConfig(const std::string& key) {
     auto sessionProperty = sessionProperties_.find(key);
     if (sessionProperty == sessionProperties_.end()) {

@@ -618,6 +618,14 @@ SessionProperties::SessionProperties() {
       false,
       QueryConfig::kHashTableHugePageNums,
       std::to_string(c.hashTableHugePageNums()));
+
+  addSessionProperty(
+      kHashTableEnableHugePage,
+      "Enable huge page for HashTable",
+      BOOLEAN(),
+      false,
+      QueryConfig::kHashTableEnableHugePage,
+      std::to_string(c.hashTableEnableHugePage()));
 }
 
 const std::string SessionProperties::toVeloxConfig(
