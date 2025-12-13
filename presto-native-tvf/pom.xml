@@ -75,6 +75,11 @@
                 <artifactId>json</artifactId>
             </dependency>
 
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+            </dependency>
+
             <!-- Presto SPI -->
             <dependency>
                 <groupId>com.facebook.presto</groupId>
@@ -91,13 +96,10 @@
                 <groupId>com.facebook.airlift</groupId>
                 <artifactId>bootstrap</artifactId>
             </dependency>
+
             <dependency>
                 <groupId>com.facebook.airlift</groupId>
                 <artifactId>http-client</artifactId>
-            </dependency>
-            <dependency>
-                <groupId>com.facebook.presto</groupId>
-                <artifactId>presto-main-base</artifactId>
             </dependency>
         </dependencies>
 </project>

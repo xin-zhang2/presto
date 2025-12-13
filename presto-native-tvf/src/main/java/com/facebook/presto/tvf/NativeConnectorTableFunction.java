@@ -18,10 +18,10 @@ import com.facebook.airlift.http.client.Request;
 import com.facebook.airlift.json.JsonCodec;
 import com.facebook.airlift.json.JsonCodecFactory;
 import com.facebook.airlift.json.JsonObjectMapperProvider;
-import com.facebook.presto.block.BlockJsonSerde.Serializer;
 import com.facebook.presto.common.QualifiedObjectName;
 import com.facebook.presto.common.block.Block;
 import com.facebook.presto.common.block.BlockEncodingManager;
+import com.facebook.presto.common.block.BlockEncodingSerde;
 import com.facebook.presto.common.type.TypeManager;
 import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.NodeManager;
@@ -32,21 +32,29 @@ import com.facebook.presto.spi.function.table.Argument;
 import com.facebook.presto.spi.function.table.ArgumentSpecification;
 import com.facebook.presto.spi.function.table.ReturnTypeSpecification;
 import com.facebook.presto.spi.function.table.TableFunctionAnalysis;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.core.Base64Variants;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.google.common.collect.ImmutableMap;
+import io.airlift.slice.DynamicSliceOutput;
+import io.airlift.slice.Slice;
+import io.airlift.slice.SliceOutput;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 import static com.facebook.airlift.http.client.JsonBodyGenerator.jsonBodyGenerator;
 import static com.facebook.airlift.http.client.JsonResponseHandler.createJsonResponseHandler;
 import static com.facebook.airlift.http.client.Request.Builder.preparePost;
+import static com.facebook.presto.common.block.BlockSerdeUtil.writeBlock;
 import static com.facebook.presto.spi.StandardErrorCode.TABLE_FUNCTION_ANALYSIS_FAILED;
 import static com.facebook.presto.tvf.NativeTVFProvider.getWorkerLocation;
 import static com.google.common.net.HttpHeaders.ACCEPT;
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 import static com.google.common.net.MediaType.JSON_UTF_8;
+import static java.lang.Math.toIntExact;
 import static java.util.Objects.requireNonNull;
 
 public class NativeConnectorTableFunction
@@ -64,10 +72,8 @@ public class NativeConnectorTableFunction
     static {
         JsonObjectMapperProvider provider = new JsonObjectMapperProvider();
         provider.setJsonSerializers(ImmutableMap.of(
-                Block.class, new Serializer(new BlockEncodingManager())));
+                Block.class, new BlockSerializer(new BlockEncodingManager())));
 
-        ObjectMapper mapper = provider.get();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         JsonCodecFactory codecFactory = new JsonCodecFactory(provider);
         connectorTableMetadataJsonCodec = codecFactory.jsonCodec(ConnectorTableMetadata.class);
     }
@@ -109,5 +115,27 @@ public class NativeConnectorTableFunction
                 .setHeader(CONTENT_TYPE, JSON_UTF_8.toString())
                 .setHeader(ACCEPT, JSON_UTF_8.toString())
                 .build();
+    }
+
+    private static class BlockSerializer
+            extends JsonSerializer<Block>
+    {
+        private final BlockEncodingSerde blockEncodingSerde;
+
+        public BlockSerializer(BlockEncodingSerde blockEncodingSerde)
+        {
+            this.blockEncodingSerde = requireNonNull(blockEncodingSerde, "blockEncodingSerde is null");
+        }
+
+        @Override
+        public void serialize(Block block, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
+                throws IOException
+        {
+            //  Encoding name is length prefixed as are other block data encodings
+            SliceOutput output = new DynamicSliceOutput(toIntExact(block.getSizeInBytes() + block.getEncodingName().length() + (2 * Integer.BYTES)));
+            writeBlock(blockEncodingSerde, output, block);
+            Slice slice = output.slice();
+            jsonGenerator.writeBinary(Base64Variants.MIME_NO_LINEFEEDS, slice.byteArray(), slice.byteArrayOffset(), slice.length());
+        }
     }
 }

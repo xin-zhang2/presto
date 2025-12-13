@@ -165,7 +165,7 @@ public class GlobalSystemConnector
             @Override
             public ConnectorSplitSource getSplits(ConnectorTransactionHandle transaction, ConnectorSession session, ConnectorTableFunctionHandle function)
             {
-                return function.getSplits(transaction, session, nodeManager, functionAndTypeManager);
+                return function.getSplits(transaction, session, nodeManager);
             }
         };
     }
