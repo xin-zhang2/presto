@@ -42,9 +42,9 @@ std::unique_ptr<SimpleTableFunctionAnalysis> SimpleTableFunction::analyze(
 
 void registerSimpleTableFunction(const std::string& name) {
   TableArgumentSpecList argSpecs;
-  argSpecs.insert(
+  argSpecs.push_back(
       std::make_shared<ScalarArgumentSpecification>("COLUMN", VARCHAR(), true));
-  argSpecs.insert(
+  argSpecs.push_back(
       std::make_shared<ScalarArgumentSpecification>(
           "IGNORED", BIGINT(), false));
 
@@ -89,7 +89,7 @@ std::unique_ptr<IdentityFunctionAnalysis> IdentityFunction::analyze(
 
 void registerIdentityFunction(const std::string& name) {
   TableArgumentSpecList argSpecs;
-  argSpecs.insert(
+  argSpecs.push_back(
       std::make_shared<TableArgumentSpecification>(
           "INPUT", true, false, false));
   registerTableFunction(
@@ -156,10 +156,10 @@ std::unique_ptr<RepeatFunctionAnalysis> RepeatFunction::analyze(
 
 void registerRepeatFunction(const std::string& name) {
   TableArgumentSpecList argSpecs;
-  argSpecs.insert(
+  argSpecs.push_back(
       std::make_shared<TableArgumentSpecification>(
           "INPUT", true, false, false));
-  argSpecs.insert(
+  argSpecs.push_back(
       std::make_shared<ScalarArgumentSpecification>("COUNT", BIGINT(), true));
   registerTableFunction(
       name,
