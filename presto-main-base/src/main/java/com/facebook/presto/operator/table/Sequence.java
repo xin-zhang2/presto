@@ -170,7 +170,7 @@ public class Sequence
         }
 
         @Override
-        public ConnectorSplitSource getSplits(ConnectorTransactionHandle transaction, ConnectorSession session, NodeManager nodeManager, Object functionAndTypeManager)
+        public ConnectorSplitSource getSplits(ConnectorTransactionHandle transaction, ConnectorSession session, NodeManager nodeManager)
         {
             return getSequenceFunctionSplitSource(this);
         }

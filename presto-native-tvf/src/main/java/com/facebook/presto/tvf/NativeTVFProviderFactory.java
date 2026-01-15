@@ -34,7 +34,7 @@ import static com.google.common.base.Throwables.throwIfUnchecked;
 public class NativeTVFProviderFactory
         implements TVFProviderFactory
 {
-    private static final String NAME = "system";
+    protected static final String NAME = "system";
 
     private static final NativeTableFunctionHandle.Resolver HANDLE_RESOLVER = new NativeTableFunctionHandle.Resolver();
 
