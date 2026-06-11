@@ -23,7 +23,6 @@
 
 namespace facebook::presto {
 namespace {
-
 void updateVeloxConfigsWithSpecialCases(
     std::unordered_map<std::string, std::string>& configStrings) {
   // If `legacy_timestamp` is true, the coordinator expects timestamp
