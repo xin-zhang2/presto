@@ -347,6 +347,24 @@ bytes / number of destinations for each destination before producing a Serialize
 Native Execution only. If true, the PartitionedOutput operator will flush rows eagerly, without waiting
 until buffers reach a certain size. Default is false.
 
+``native_optimized_partitioned_output_enabled``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* **Type:** ``boolean``
+* **Default value:** ``false``
+
+Native Execution only. If true, use ``OptimizedPartitionedOutput`` for
+repartitioning. Default is false.
+
+``native_optimized_hash_partition_function_enabled``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* **Type:** ``boolean``
+* **Default value:** ``false``
+
+Native Execution only. If true, use ``OptimizedHashPartitionFunction`` instead of
+``HashPartitionFunction``. Default is false.
+
 ``native_max_local_exchange_partition_count``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
