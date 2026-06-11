@@ -421,6 +421,24 @@ SessionProperties::SessionProperties() {
       "false");
 
   addSessionProperty(
+      kOptimizedPartitionedOutputEnabled,
+      "If true, use OptimizedPartitionedOutput for repartitioning. Default is "
+      "false.",
+      BOOLEAN(),
+      false,
+      QueryConfig::kOptimizedPartitionedOutputEnabled,
+      util::boolToLowerCaseString(c.optimizedPartitionedOutputEnabled()));
+
+  addSessionProperty(
+      kOptimizedHashPartitionFunctionEnabled,
+      "If true, use OptimizedHashPartitionFunction instead of "
+      "HashPartitionFunction. Default is false.",
+      BOOLEAN(),
+      false,
+      QueryConfig::kOptimizedHashPartitionFunctionEnabled,
+      util::boolToLowerCaseString(c.optimizedHashPartitionFunctionEnabled()));
+
+  addSessionProperty(
       kMinShuffleCompressionPageSizeBytes,
       "Native Execution only. Minimum serialized page size in bytes to attempt "
       "shuffle compression.",
