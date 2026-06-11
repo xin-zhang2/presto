@@ -240,6 +240,15 @@ class SessionProperties : public SessionPropertiesProvider {
   static constexpr const char* kPartitionedOutputEagerFlush =
       "native_partitioned_output_eager_flush";
 
+  /// If true, use OptimizedPartitionedOutput for repartitioning.
+  static constexpr const char* kOptimizedPartitionedOutputEnabled =
+      "optimized_partitionedoutput";
+
+  /// If true, use OptimizedHashPartitionFunction instead of
+  /// HashPartitionFunction.
+  static constexpr const char* kOptimizedHashPartitionFunctionEnabled =
+      "optimized_hash_partition_function_enabled";
+
   /// Maximum number of partitions created by a local exchange.
   /// Affects concurrency for pipelines containing LocalPartitionNode.
   static constexpr const char* kMaxLocalExchangePartitionCount =

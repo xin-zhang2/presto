@@ -1378,6 +1378,19 @@ public abstract class AbstractTestNativeGeneralQueries
     }
 
     @Test
+    public void testSetSessionNativeWorkerSessionProperty()
+    {
+        @Language("SQL") String setSession = "SET SESSION optimized_partitionedoutput=true";
+        MaterializedResult setSessionResult = computeActual(setSession);
+        assertEquals(
+                setSessionResult.toString(),
+                "MaterializedResult{rows=[[true]], " +
+                        "types=[boolean], " +
+                        "setSessionProperties={optimized_partitionedoutput=true}, " +
+                        "resetSessionProperties=[], updateInfo=UpdateInfo{updateType='SET SESSION', updateObject=''}, clearTransactionId=false}");
+    }
+
+    @Test
     public void testBucketedExecution()
     {
         // Run aggregation query that groups by a bucketed column.
