@@ -651,6 +651,34 @@ TEST_F(PrestoToVeloxQueryConfigTest, specialHardCodedPrestoConfigurations) {
   EXPECT_EQ(2000, veloxConfig9.driverCpuTimeSliceLimitMs());
 }
 
+TEST_F(
+    PrestoToVeloxQueryConfigTest,
+    optimizedPartitionedOutputSessionProperties) {
+  auto session = createBasicSession();
+  const auto optimizedPartitionedOutputKey =
+      SessionProperties::kOptimizedPartitionedOutputEnabled;
+  const auto optimizedHashPartitionFunctionKey =
+      SessionProperties::kOptimizedHashPartitionFunctionEnabled;
+
+  auto defaultConfig = QueryConfig(toVeloxConfigs(session));
+  EXPECT_FALSE(defaultConfig.optimizedPartitionedOutputEnabled());
+  EXPECT_FALSE(defaultConfig.optimizedHashPartitionFunctionEnabled());
+
+  session.systemProperties[optimizedPartitionedOutputKey] = "true";
+  session.systemProperties[optimizedHashPartitionFunctionKey] = "true";
+
+  auto enabledConfig = QueryConfig(toVeloxConfigs(session));
+  EXPECT_TRUE(enabledConfig.optimizedPartitionedOutputEnabled());
+  EXPECT_TRUE(enabledConfig.optimizedHashPartitionFunctionEnabled());
+
+  session.systemProperties[optimizedPartitionedOutputKey] = "false";
+  session.systemProperties[optimizedHashPartitionFunctionKey] = "false";
+
+  auto disabledConfig = QueryConfig(toVeloxConfigs(session));
+  EXPECT_FALSE(disabledConfig.optimizedPartitionedOutputEnabled());
+  EXPECT_FALSE(disabledConfig.optimizedHashPartitionFunctionEnabled());
+}
+
 TEST_F(PrestoToVeloxQueryConfigTest, sessionAndExtraCredentialsOverload) {
   // --- Test 1: Basic session with empty extra credentials ---
   {
