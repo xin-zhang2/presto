@@ -584,8 +584,7 @@ double SystemConfig::exchangeHttpClientNumCpuThreadsHwMultiplier() const {
 }
 
 bool SystemConfig::exchangeChecksumEnabled() const {
-  return optionalProperty<double>(kExchangeChecksumEnabled)
-      .value();
+  return optionalProperty<bool>(kExchangeChecksumEnabled).value();
 }
 
 double SystemConfig::connectorNumCpuThreadsHwMultiplier() const {
