@@ -19,7 +19,7 @@ import com.facebook.presto.Session;
 import com.facebook.presto.common.RuntimeStats;
 import com.facebook.presto.connector.jmx.JmxPlugin;
 import com.facebook.presto.execution.QueryManagerConfig.ExchangeMaterializationStrategy;
-import com.facebook.presto.hive.TestHiveEventListenerPlugin.TestingHiveEventListenerPlugin;
+import com.facebook.presto.hive.TestAhanaEventListenerPlugin.TestingAhanaEventListenerPlugin;
 import com.facebook.presto.hive.authentication.NoHdfsAuthentication;
 import com.facebook.presto.hive.metastore.Database;
 import com.facebook.presto.hive.metastore.ExtendedHiveMetastore;
@@ -43,6 +43,7 @@ import io.airlift.tpch.TpchTable;
 import org.joda.time.DateTimeZone;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -65,6 +66,7 @@ import static com.facebook.presto.spi.security.SelectedRole.Type.ROLE;
 import static com.facebook.presto.testing.TestingSession.testSessionBuilder;
 import static com.facebook.presto.tests.QueryAssertions.copyTables;
 import static com.facebook.presto.tpch.TpchMetadata.TINY_SCHEMA_NAME;
+import static com.facebook.presto.util.PropertiesUtil.loadProperties;
 import static java.util.Locale.ENGLISH;
 import static org.testng.Assert.assertEquals;
 
@@ -231,7 +233,7 @@ public final class HiveQueryRunner
         try {
             queryRunner.installPlugin(new TpchPlugin());
             queryRunner.installPlugin(new TpcdsPlugin());
-            queryRunner.installPlugin(new TestingHiveEventListenerPlugin());
+            installEventListener(queryRunner);
             queryRunner.createCatalog("tpch", "tpch");
             queryRunner.createCatalog("tpcds", "tpcds", tpcdsProperties);
             Map<String, String> tpchProperties = ImmutableMap.<String, String>builder()
@@ -459,6 +461,13 @@ public final class HiveQueryRunner
                 .setCatalog(HIVE_CATALOG)
                 .setSchema(TPCH_SCHEMA)
                 .build();
+    }
+
+    private static void installEventListener(DistributedQueryRunner queryRunner) throws IOException
+    {
+        File eventListenerPath = new File("/Users/xinzhang/var/presto/etc/event-listener.properties");
+        Map<String, String> eventListenerProperties = loadProperties(eventListenerPath);
+        queryRunner.installPlugin(new TestingAhanaEventListenerPlugin(eventListenerProperties));
     }
 
     public static void main(String[] args)
