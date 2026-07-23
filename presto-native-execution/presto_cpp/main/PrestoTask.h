@@ -72,6 +72,8 @@ struct Result {
   bool complete;
   std::vector<int64_t> remainingBytes;
   int64_t waitTimeMs;
+  // The total number of rows in the result set.
+  int64_t totalNumRows;
 };
 
 struct ResultRequest {
