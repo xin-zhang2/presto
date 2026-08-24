@@ -340,6 +340,13 @@ void PrestoExchangeSource::processDataResponse(
     }
   }
 
+  std::optional<int64_t> numRows;
+  const auto numRowsStr = headers->getHeaders().getSingleOrEmpty(
+      protocol::PRESTO_BUFFER_TOTAL_NUM_ROWS_HEADER);
+  if (!numRowsStr.empty()) {
+    numRows = folly::to<int64_t>(numRowsStr);
+  }
+
   std::optional<int64_t> ackSequenceOpt;
   const auto nextTokenStr = headers->getHeaders().getSingleOrEmpty(
       protocol::PRESTO_PAGE_NEXT_TOKEN_HEADER);
@@ -384,7 +391,8 @@ void PrestoExchangeSource::processDataResponse(
 
     if (enableBufferCopy_) {
       page = std::make_unique<exec::PrestoSerializedPage>(
-          std::move(singleChain), [pool = pool_](folly::IOBuf& iobuf) {
+          std::move(singleChain),
+          [pool = pool_](folly::IOBuf& iobuf) {
             int64_t freedBytes{0};
             // Free the backed memory from MemoryAllocator on page dtor
             folly::IOBuf* start = &iobuf;
@@ -395,12 +403,15 @@ void PrestoExchangeSource::processDataResponse(
               curr = curr->next();
             } while (curr != start);
             PrestoExchangeSource::updateMemoryUsage(-freedBytes);
-          });
+          },
+          numRows);
     } else {
       page = std::make_unique<exec::PrestoSerializedPage>(
-          std::move(singleChain), [iobufBytes](folly::IOBuf& iobuf) {
+          std::move(singleChain),
+          [iobufBytes](folly::IOBuf& iobuf) {
             PrestoExchangeSource::updateMemoryUsage(-iobufBytes);
-          });
+          },
+          numRows);
     }
   }
 
@@ -411,10 +422,15 @@ void PrestoExchangeSource::processDataResponse(
     std::lock_guard<std::mutex> l(queue_->mutex());
     if (page) {
       VLOG(1) << "Enqueuing page for " << basePath_ << "/" << sequence_ << ": "
-              << pageSize << " bytes";
+              << pageSize << " bytes, " << numPages_ << " pages, " << totalRows_
+              << " total rows before enqueue";
       ++numPages_;
       pageSize_ += pageSize;
+      totalRows_ += numRows.value_or(0);
       queue_->enqueueLocked(std::move(page), queuePromises);
+      VLOG(1) << "Enqueuing page for " << basePath_ << "/" << sequence_ << ": "
+              << pageSize << " bytes, " << numPages_ << " pages, " << totalRows_
+              << " total rows after enqueue";
     }
     if (complete) {
       VLOG(1) << "Enqueuing empty page for " << basePath_ << "/" << sequence_;
@@ -434,7 +450,7 @@ void PrestoExchangeSource::processDataResponse(
 
   if (requestPromise.valid() && !requestPromise.isFulfilled()) {
     requestPromise.setValue(
-        Response{pageSize, complete, std::move(remainingBytes)});
+        Response{pageSize, complete, std::move(remainingBytes), numRows});
   } else {
     // The source must have been closed.
     VELOX_CHECK(closed_.load());

@@ -14,6 +14,7 @@
 
 #include "presto_cpp/main/TaskManager.h"
 
+#include <numeric>
 #include <utility>
 
 #include <boost/uuid/uuid.hpp>
@@ -162,7 +163,8 @@ void getData(
       [taskId = taskId, bufferId = destination, promiseHolder, startMs](
           std::vector<std::unique_ptr<folly::IOBuf>> pages,
           int64_t sequence,
-          std::vector<int64_t> remainingBytes) mutable {
+          std::vector<int64_t> remainingBytes,
+          std::vector<int64_t> pageNumRows) mutable {
         bool complete = false;
         int64_t nextSequence = sequence;
         std::unique_ptr<folly::IOBuf> iobuf;
@@ -200,6 +202,8 @@ void getData(
         result->data = std::move(iobuf);
         result->remainingBytes = std::move(remainingBytes);
         result->waitTimeMs = waitTimeMs;
+        result->totalNumRows =
+            std::accumulate(pageNumRows.begin(), pageNumRows.end(), int64_t{0});
 
         promiseHolder->promise.setValue(std::move(result));
 

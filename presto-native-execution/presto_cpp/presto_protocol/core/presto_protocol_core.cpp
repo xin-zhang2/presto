@@ -89,6 +89,8 @@ const char* const PRESTO_BUFFER_REMAINING_BYTES_HEADER =
     "X-Presto-Buffer-Remaining-Bytes";
 const char* const PRESTO_BUFFER_WAIT_TIME_MS_HEADER =
     "X-Presto-Buffer-Wait-Time-Ms";
+const char* const PRESTO_BUFFER_TOTAL_NUM_ROWS_HEADER =
+    "X-Presto-Buffer-Total-Rows";
 const char* const PRESTO_BUFFER_REMAINING_FROM_SPILL_HEADER =
     "X-Presto-Buffer-Remaining-From-Spill";
 
